@@ -1,0 +1,68 @@
+{
+  "items": [
+    {
+      "id": "architecture-lab-ddd-patterns",
+      "source": "The Architecture Lab",
+      "category": ".NET & Architecture",
+      "published": "2026-04-03",
+      "title": "3 DDD patterns: rich domain, specification and domain events",
+      "url": "https://thearchitecturelab.com/post/3-ddd-patterns",
+      "summary": "Move real business rules closer to the domain model, keep complex business filters reusable, and separate side effects through domain events when the complexity justifies it.",
+      "ta_view": "During a review, ask where the invariant lives, whether the specification can be translated efficiently by EF Core, and when the side effect is delivered. Domain events inside one process do not by themselves provide durable delivery; use an outbox and idempotent consumers when the event crosses a process boundary.",
+      "questions": [
+        "Which business rule is difficult to test in the current service or handler?",
+        "Does this pattern remove real duplication or only add another abstraction?",
+        "What happens if the database commits but the side effect fails?"
+      ],
+      "featured": true
+    },
+    {
+      "id": "architecture-lab-agentic-workflow",
+      "source": "The Architecture Lab",
+      "category": "AI Engineering",
+      "published": "2026-04-24",
+      "title": ".NET agentic development with supervised AI",
+      "url": "https://thearchitecturelab.com/post/agentic-workflow",
+      "summary": "The article combines project context, Jira integration, repeatable instructions, automated tests and human review. A failing test gives an agent a concrete target, while the engineer still checks scope and quality.",
+      "ta_view": "Treat this as one experience report rather than proof that the same workflow fits every project. For enterprise adoption, measure cycle time, review effort, escaped defects, rework and total AI cost. Keep approved tools, data boundaries and human approval for critical changes.",
+      "questions": [
+        "What project context is versioned and reviewed?",
+        "Which tests prove the requested behaviour instead of mirroring the implementation?",
+        "How do we detect scope growth, a flaky test or a false claim about a pre-existing failure?"
+      ],
+      "featured": true
+    },
+    {
+      "id": "architecture-lab-dotnet-roadmap",
+      "source": "The Architecture Lab",
+      "category": ".NET",
+      "published": "2026-05-01",
+      "title": "A minimalist .NET learning roadmap",
+      "url": "https://thearchitecturelab.com/post/net-development-roadmap-minimalist-edition",
+      "summary": "Prioritise modern C# and AI usage, ASP.NET Core APIs, relational and non-relational data, testing, messaging, cloud, CI/CD, observability, containers, security and architectural decisions.",
+      "ta_view": "Use the roadmap as an index, then choose depth from current project risk. For this TA role, networking, identity, observability, AKS/GKE operations and failure handling deserve more time than another framework tutorial. Learning is complete only when it produces a review checklist, lab or incident diagnosis.",
+      "questions": [
+        "Which skill reduces the largest current delivery or production risk?",
+        "What practical output will prove the skill was learned?",
+        "Which topic can be deferred because another team owns it?"
+      ],
+      "featured": true
+    },
+    {
+      "id": "architecture-lab-clean-architecture",
+      "source": "The Architecture Lab",
+      "category": ".NET & Architecture",
+      "published": "2026-05-29",
+      "title": "Five common Clean Architecture mistakes",
+      "url": "https://thearchitecturelab.com/post/deadly-clean-architecture-mistakes",
+      "summary": "Avoid excessive structure for a simple domain, infrastructure leakage into domain code, navigation organised only by technical layers, automatic mapping at every layer and business logic in controllers.",
+      "ta_view": "Review dependency direction and change cost, not folder count. Feature-based organisation can improve navigation, but shared policies and boundaries still need clear ownership. Add a DTO or mapping boundary when it protects a real external contract, security boundary or independent change rate.",
+      "questions": [
+        "Which expected change becomes easier because of this boundary?",
+        "Can a new developer find one business flow without opening every layer?",
+        "Does the domain depend on EF, HTTP, messaging or another framework?"
+      ],
+      "featured": true
+    }
+  ]
+}

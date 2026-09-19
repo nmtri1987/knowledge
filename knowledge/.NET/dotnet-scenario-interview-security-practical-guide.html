@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>.NET Scenario, Security & Production Practical Guide</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#11182b; --panel2:#0f1526; --text:#e8edf7; --muted:#a9b5c8;
+  --accent:#73b7ff; --accent2:#7ee0b8; --warn:#ffd166; --danger:#ff7b7b; --border:#26324a;
+  --code:#090d18; --good:#1f9d74;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+header{padding:38px 24px 26px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#111933,#0b1020)}
+.wrap{max-width:1200px;margin:auto;padding:0 20px}
+h1{font-size:2.2rem;margin:0 0 10px}
+h2{margin-top:0}
+.subtitle{color:var(--muted);max-width:950px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.badge{border:1px solid var(--border);background:#101a31;padding:5px 10px;border-radius:999px;font-size:.88rem;color:#cfe0f5}
+.layout{display:grid;grid-template-columns:280px 1fr;gap:24px;padding:24px 0 60px}
+nav{position:sticky;top:14px;align-self:start;max-height:calc(100vh - 28px);overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:14px}
+nav h3{font-size:.95rem;margin:4px 8px 8px;color:#dbe7f9}
+nav a{display:block;padding:7px 9px;border-radius:8px;font-size:.9rem;color:#bfd0e6}
+nav a:hover{background:#16203a;text-decoration:none}
+main{min-width:0}
+.hero,.section,.scenario{border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 8px 30px rgba(0,0,0,.15)}
+.hero h2{color:var(--accent2)}
+.scenario h2{font-size:1.35rem;margin-bottom:4px}
+.scenario .lead{color:var(--muted);margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:14px}
+.card h3{font-size:1rem;margin:0 0 8px;color:#d7e7ff}
+.card ul,.card ol{margin:8px 0 0;padding-left:20px}
+.tag{display:inline-block;font-size:.78rem;border:1px solid var(--border);border-radius:6px;padding:2px 7px;margin-right:5px;color:#cad7e8}
+details{border:1px solid var(--border);border-radius:10px;background:#0e1425;margin:10px 0;padding:0}
+summary{cursor:pointer;padding:12px 14px;font-weight:600;color:#d8e7ff}
+details>div{padding:0 14px 14px}
+code{font-family:Consolas,Menlo,monospace}
+pre{background:var(--code);border:1px solid #222d44;border-radius:10px;padding:13px;overflow:auto;color:#e6edf3;font-size:.9rem}
+table{width:100%;border-collapse:collapse;margin:12px 0 4px;font-size:.93rem}
+th,td{border:1px solid var(--border);padding:9px;vertical-align:top}
+th{background:#15213b;text-align:left}
+.note,.prod,.decision,.warn{border-left:4px solid var(--accent);padding:10px 12px;background:#0f1930;border-radius:6px;margin:12px 0}
+.prod{border-left-color:var(--accent2)}
+.decision{border-left-color:var(--warn)}
+.warn{border-left-color:var(--danger)}
+.flow{font-family:Consolas,monospace;background:#0b1221;border:1px dashed #334767;padding:12px;border-radius:10px;white-space:pre-wrap}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi div{background:#0e1629;border:1px solid var(--border);padding:11px;border-radius:10px;text-align:center}
+.kpi b{display:block;font-size:1.05rem;color:var(--accent2)}
+footer{color:var(--muted);font-size:.88rem;padding:18px 0 40px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav{position:relative;max-height:none}.grid{grid-template-columns:1fr}.kpi{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>.NET Scenario, Security & Production Practical Guide</h1>
+    <p class="subtitle">Tổng hợp 15 tình huống trong 5 hình + 53 security vulnerabilities từ repository .NET, mở rộng theo hướng có thể dùng ngay trong công việc Technical Advisor: nguyên nhân → cách kiểm tra → cách xử lý → ví dụ .NET/Azure → lưu ý production.</p>
+    <div class="badges">
+      <span class="badge">ASP.NET Core</span><span class="badge">EF Core / SQL Server</span>
+      <span class="badge">Azure</span><span class="badge">Redis</span><span class="badge">Service Bus / Event Hubs</span>
+      <span class="badge">Blob Storage</span><span class="badge">AKS / ACA</span><span class="badge">Observability</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+<nav>
+  <h3>Mục lục</h3>
+  <a href="#mindset">0. Mindset điều tra production</a>
+  <a href="#s1">1. API chậm 5–10 giây</a>
+  <a href="#s2">2. 10.000 request/phút</a>
+  <a href="#s3">3. Concurrent update</a>
+  <a href="#s4">4. External payment API lỗi</a>
+  <a href="#s5">5. Database bottleneck</a>
+  <a href="#s6">6. Background job chạy trùng</a>
+  <a href="#s7">7. Memory leak</a>
+  <a href="#s8">8. Stale cache</a>
+  <a href="#s9">9. Upload/process file 1GB+</a>
+  <a href="#s10">10. SQL deadlock</a>
+  <a href="#s11">11. Session tăng memory</a>
+  <a href="#s12">12. Legacy SOAP chậm/lỗi</a>
+  <a href="#s13">13. Gửi email cho hàng triệu user</a>
+  <a href="#s14">14. Tối ưu API gọi nhiều service</a>
+  <a href="#s15">15. Monolith → Microservices</a>
+
+  <a href="#security-overview">16. Security Deep Dive (53 vulns)</a>
+  <a href="#sec-injection">A. Injection</a>
+  <a href="#sec-xss">B. XSS</a>
+  <a href="#sec-auth">C. AuthN/AuthZ</a>
+  <a href="#sec-crypto">D. Cryptography</a>
+  <a href="#sec-sensitive">E. Sensitive Data</a>
+  <a href="#sec-xml">F. XML/Serialization</a>
+  <a href="#sec-file">G. File Operations</a>
+  <a href="#sec-ssrf">H. SSRF</a>
+  <a href="#sec-business">I. Business Logic</a>
+  <a href="#sec-api">J. API Security</a>
+  <a href="#security-ta-checklist">17. Security TA checklist</a>
+  <a href="#checklist">Checklist TA production</a>
+</nav>
+
+<main>
+<section id="mindset" class="hero">
+  <h2>0. Mindset chung: đo trước, tối ưu sau</h2>
+  <div class="flow">Symptom → Measure → Locate bottleneck → Form hypothesis → Verify → Fix → Load test → Observe after deploy</div>
+  <p>Điểm quan trọng nhất của cả 15 tình huống: <b>không đoán bottleneck</b>. Một API chậm có thể do CPU, SQL, thread starvation, network, DNS, external API, lock, GC, cache miss hoặc retry storm. Cần đo latency theo từng dependency trước khi sửa.</p>
+  <div class="kpi">
+    <div><b>p50 / p95 / p99</b>Latency</div>
+    <div><b>RPS / RPM</b>Throughput</div>
+    <div><b>Error %</b>Reliability</div>
+    <div><b>CPU / RAM / GC</b>Resource</div>
+  </div>
+  <div class="prod"><b>Khuyến nghị cho môi trường Azure:</b> chuẩn hóa Correlation/Trace ID xuyên API → Service Bus → Worker → SQL; dùng Application Insights/OpenTelemetry để xem dependency timeline thay vì chỉ đọc log text.</div>
+</section>
+
+<section id="s1" class="scenario">
+  <h2>1. API đột nhiên mất 5–10 giây để phản hồi</h2>
+  <p class="lead">Mục tiêu: xác định chính xác thời gian bị mất ở layer nào.</p>
+  <div class="grid">
+    <div class="card"><h3>Nguyên nhân thường gặp</h3><ul>
+      <li>SQL query chậm / execution plan thay đổi.</li><li>External API timeout/retry.</li>
+      <li>Thread pool starvation do sync-over-async.</li><li>Redis/cache miss hàng loạt.</li>
+      <li>CPU/GC cao, memory pressure.</li><li>DNS/TLS/network latency.</li>
+    </ul></div>
+    <div class="card"><h3>Cách kiểm tra</h3><ol>
+      <li>Application Insights → Transaction Search / Performance.</li>
+      <li>Breakdown Server vs SQL vs HTTP dependency.</li>
+      <li>SQL Query Store / Actual Execution Plan.</li>
+      <li><code>dotnet-counters</code> cho CPU, GC, ThreadPool.</li>
+      <li>Kiểm tra deploy/change ngay trước thời điểm latency tăng.</li>
+    </ol></div>
+  </div>
+  <details open><summary>Ví dụ thực tế ASP.NET Core</summary><div>
+<pre><code>public async Task&lt;OrderDto&gt; GetOrderAsync(int id, CancellationToken ct)
+{
+    // Không dùng .Result / .Wait()
+    var order = await _db.Orders
+        .AsNoTracking()
+        .SingleAsync(x => x.Id == id, ct);
+
+    return _mapper.Map&lt;OrderDto&gt;(order);
+}</code></pre>
+  <p>Nếu query chiếm 7.8s trên tổng 8.1s thì không nên scale API trước; cần tối ưu query/index hoặc dữ liệu trước.</p>
+  </div></details>
+  <div class="decision"><b>Thứ tự xử lý:</b> APM → dependency breakdown → SQL/network/thread → sửa đúng bottleneck → đo lại p95/p99.</div>
+  <div class="prod"><b>Production:</b> đặt timeout cho outbound call; propagate CancellationToken; tránh retry mọi lỗi; dashboard p95/p99 theo endpoint, không chỉ average.</div>
+</section>
+
+<section id="s2" class="scenario"><div class="warn"><b>Security lens:</b> liên quan trực tiếp <a href="#v-missing-rate-limiting">Missing Rate Limiting</a>. Scale-out không thay thế throttling; cần bảo vệ DB/downstream khỏi abusive traffic.</div>
+  <h2>2. ASP.NET Core nhận 10.000 requests/phút và bắt đầu fail</h2>
+  <p class="lead">10.000 RPM ≈ 167 RPS. Con số này không quá lớn với một API stateless tốt, nhưng có thể làm DB hoặc dependency nghẽn.</p>
+  <div class="grid">
+    <div class="card"><h3>Kiểm tra trước</h3><ul>
+      <li>CPU, RAM, ThreadPool, socket, connection pool.</li>
+      <li>RPS theo instance và p95 latency.</li>
+      <li>DB CPU/IO/locks/connections.</li>
+      <li>Tỷ lệ cache hit.</li>
+    </ul></div>
+    <div class="card"><h3>Giải pháp</h3><ul>
+      <li>Scale out nhiều instance sau Load Balancer.</li>
+      <li>Stateless API; session chuyển Redis/DB nếu cần.</li>
+      <li>Cache read-heavy data.</li>
+      <li>Rate limiting / backpressure.</li>
+      <li>Queue tác vụ không cần xử lý đồng bộ.</li>
+    </ul></div>
+  </div>
+  <table>
+    <tr><th>Option</th><th>Khi phù hợp</th><th>Không giải quyết được</th></tr>
+    <tr><td>Scale out API</td><td>CPU hoặc request concurrency cao</td><td>DB là bottleneck</td></tr>
+    <tr><td>Redis cache</td><td>Read lặp lại, dữ liệu ít đổi</td><td>Write-heavy / consistency nghiêm ngặt</td></tr>
+    <tr><td>Queue</td><td>Task có thể async</td><td>Request cần result ngay</td></tr>
+    <tr><td>Rate limit</td><td>Bảo vệ backend</td><td>Tăng capacity thực</td></tr>
+  </table>
+  <details><summary>Ví dụ rate limiting .NET 8</summary><div>
+<pre><code>builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("api", opt =>
+    {
+        opt.PermitLimit = 100;
+        opt.Window = TimeSpan.FromSeconds(1);
+        opt.QueueLimit = 200;
+    });
+});</code></pre>
+  </div></details>
+  <div class="prod"><b>Production:</b> với AKS/ACA hãy set resource requests/limits hợp lý, readiness probe, HPA/KEDA và giới hạn DB connection pool theo số replica để tránh scale API làm DB chết nhanh hơn.</div>
+</section>
+
+<section id="s3" class="scenario">
+  <h2>3. Hai user cập nhật cùng record, người sau ghi đè người trước</h2>
+  <p class="lead">Đây là bài toán optimistic concurrency.</p>
+  <div class="grid">
+    <div class="card"><h3>Cách làm</h3><ol>
+      <li>Thêm <code>rowversion</code> / concurrency token.</li>
+      <li>Client gửi version cũ khi update.</li>
+      <li>DB update với điều kiện ID + version.</li>
+      <li>Không match → trả HTTP 409 Conflict.</li>
+      <li>User reload/merge rồi retry.</li>
+    </ol></div>
+    <div class="card"><h3>Khi dùng pessimistic lock?</h3><p>Khi conflict gây hậu quả lớn và thao tác rất ngắn, ví dụ giữ tồn kho cực ngắn. Không nên giữ DB lock qua thời gian user nhập liệu.</p></div>
+  </div>
+<pre><code>public class Product
+{
+    public int Id { get; set; }
+    public decimal Price { get; set; }
+
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = default!;
+}</code></pre>
+  <div class="prod"><b>Production:</b> 409 nên trả currentVersion/currentData để UI có thể hiển thị “record đã thay đổi” thay vì trả generic 500.</div>
+</section>
+
+<section id="s4" class="scenario"><div class="warn"><b>Security lens:</b> kiểm tra <a href="#v-improper-certificate-validation">Improper Certificate Validation</a>, <a href="#v-sensitive-data-in-logs">Sensitive Data in Logs</a> và không đưa token vào URL.</div>
+  <h2>4. External payment API intermittent failure</h2>
+  <div class="grid">
+    <div class="card"><h3>Nguyên nhân</h3><ul><li>Timeout phía provider.</li><li>Network/TLS/DNS chập chờn.</li><li>Rate limit 429.</li><li>Provider 5xx.</li><li>Client retry gây duplicate charge.</li></ul></div>
+    <div class="card"><h3>Cách xử lý</h3><ul><li>Timeout hợp lý.</li><li>Retry exponential backoff + jitter.</li><li>Circuit breaker.</li><li>Idempotency key.</li><li>Queue cho flow có thể async.</li></ul></div>
+  </div>
+<pre><code>// Ví dụ ý tưởng với resilience pipeline
+// Retry chỉ transient faults: 408, 429, 5xx.
+// KHÔNG retry 400/401/403 một cách mù quáng.</code></pre>
+  <div class="note"><b>Idempotency:</b> Payment request có <code>Idempotency-Key = orderId/paymentAttemptId</code>. Provider hoặc API của ta lưu trạng thái key này để retry không tạo giao dịch thứ hai.</div>
+  <div class="prod"><b>Production:</b> retry budget phải nhỏ; tổng timeout của chuỗi service phải nằm trong SLA của request. Nếu upstream timeout 5s thì không thể để 3 retry × 5s.</div>
+</section>
+
+<section id="s5" class="scenario">
+  <h2>5. Database là bottleneck: điều tra gì đầu tiên?</h2>
+  <div class="grid">
+    <div class="card"><h3>Checklist SQL</h3><ul>
+      <li>Top query theo CPU / duration / logical reads.</li>
+      <li>Execution plan: scan, key lookup, bad estimate.</li>
+      <li>Missing/unused index.</li><li>Blocking, lock waits.</li>
+      <li>SQL CPU, memory, IO latency.</li><li>Connection pool exhaustion.</li>
+    </ul></div>
+    <div class="card"><h3>Checklist EF Core</h3><ul>
+      <li>N+1 query.</li><li><code>AsNoTracking()</code> cho read-only.</li>
+      <li>Projection <code>Select()</code> thay vì load full entity.</li>
+      <li>Không <code>Include()</code> cả graph quá lớn.</li>
+      <li>Batching / pagination.</li>
+    </ul></div>
+  </div>
+<pre><code>var orders = await db.Orders
+    .AsNoTracking()
+    .Where(x => x.Status == OrderStatus.Pending)
+    .Select(x => new OrderListItem(x.Id, x.Customer.Name, x.Total))
+    .Take(100)
+    .ToListAsync(ct);</code></pre>
+  <div class="prod"><b>Production:</b> Query Store rất quan trọng để phát hiện regression sau deploy hoặc plan change. Index phải dựa trên workload thật, không phải “thấy query chậm thì add index”.</div>
+</section>
+
+<section id="s6" class="scenario">
+  <h2>6. Background job đôi lúc chạy duplicate</h2>
+  <p>Trong distributed system, “exactly once” rất khó. Thiết kế thực tế thường là <b>at-least-once delivery + idempotent processing</b>.</p>
+  <div class="grid">
+    <div class="card"><h3>Defense layers</h3><ol>
+      <li>Unique job/business key trong DB.</li><li>Idempotent handler.</li>
+      <li>Distributed lock khi thật sự cần.</li><li>Retry có kiểm soát.</li><li>Audit execution.</li>
+    </ol></div>
+    <div class="card"><h3>Distributed lock</h3><ul>
+      <li>On-prem: SQL hoặc Redis.</li>
+      <li>Azure: Redis, Blob Lease.</li>
+      <li>K8s: không dùng in-memory lock giữa nhiều pod.</li>
+    </ul></div>
+  </div>
+<pre><code>CREATE UNIQUE INDEX UX_Payment_OrderId
+ON PaymentProcessing(OrderId);</code></pre>
+  <div class="prod"><b>Production:</b> lock chỉ là một lớp; unique constraint/idempotency trong DB mới là “last line of defense” khi worker crash sau khi đã xử lý nhưng trước khi ACK message.</div>
+</section>
+
+<section id="s7" class="scenario">
+  <h2>7. ASP.NET Core memory tăng liên tục / nghi memory leak</h2>
+  <div class="grid">
+    <div class="card"><h3>Nguyên nhân .NET phổ biến</h3><ul>
+      <li>Static cache không giới hạn.</li><li>Event handler không unsubscribe.</li>
+      <li>Singleton giữ object graph lớn.</li><li>Timer/background service giữ reference.</li>
+      <li>Stream/IDisposable không dispose.</li><li>LOH pressure do object lớn.</li>
+    </ul></div>
+    <div class="card"><h3>Tool</h3><ul>
+      <li><code>dotnet-counters</code></li><li><code>dotnet-gcdump</code></li>
+      <li><code>dotnet-dump</code></li><li>Visual Studio Profiler</li>
+      <li>Application Insights / Prometheus + Grafana</li>
+    </ul></div>
+  </div>
+  <div class="flow">Observe heap trend → Force/observe GC behavior → Capture dump → Compare object counts → Find retention path → Fix → Soak test</div>
+  <div class="prod"><b>Production:</b> memory cao chưa chắc là leak. .NET giữ heap để reuse. Cần nhìn “memory after GC” và object retention theo thời gian, không chỉ nhìn working set.</div>
+</section>
+
+<section id="s8" class="scenario">
+  <h2>8. User thấy stale data: thiết kế cache thế nào?</h2>
+  <div class="grid">
+    <div class="card"><h3>Cache-aside</h3><ol>
+      <li>Check cache.</li><li>Miss → đọc DB.</li><li>Set cache.</li><li>Return.</li>
+      <li>Write DB → invalidate cache.</li>
+    </ol></div>
+    <div class="card"><h3>TTL</h3><ul>
+      <li>Absolute expiration: hết hạn sau N phút.</li>
+      <li>Sliding expiration: gia hạn khi accessed.</li>
+      <li>Jitter TTL để tránh cache stampede.</li>
+    </ul></div>
+  </div>
+  <table>
+    <tr><th>Cache</th><th>Nên dùng khi</th><th>Trade-off</th></tr>
+    <tr><td>IMemoryCache</td><td>1 instance hoặc dữ liệu local</td><td>Mỗi pod một bản khác nhau</td></tr>
+    <tr><td>Redis</td><td>Nhiều instance, cần shared cache</td><td>Network dependency + serialization</td></tr>
+  </table>
+  <div class="prod"><b>Production:</b> tránh cache dữ liệu security/permission quá lâu; với config/reference data có thể cache 5–30 phút tùy SLA freshness. Theo dõi hit ratio và cache evictions.</div>
+</section>
+
+<section id="s9" class="scenario"><div class="warn"><b>Security lens:</b> file upload phải xét thêm <a href="#v-xss-via-file-upload">XSS via File Upload</a>, <a href="#v-path-traversal">Path Traversal</a>, <a href="#v-zip-slip">Zip Slip</a>, <a href="#v-arbitrary-file-write">Arbitrary File Write</a> và <a href="#v-ssrf-via-file-upload">SSRF via File Upload</a>.</div>
+  <h2>9. Upload và xử lý file lớn 1GB+</h2>
+  <p class="lead">Không nên đưa toàn bộ file qua RAM của API hoặc giữ HTTP connection trong suốt thời gian xử lý.</p>
+  <div class="grid">
+    <div class="card"><h3>Thiết kế khuyến nghị Azure</h3><ol>
+      <li>Client xin SAS upload URL.</li>
+      <li>Client upload trực tiếp Blob Storage theo block/chunk.</li>
+      <li>API ghi metadata + status.</li>
+      <li>Event/Grid/Service Bus trigger Worker.</li>
+      <li>Worker stream file, xử lý chunk.</li>
+      <li>Update status để client poll / SignalR.</li>
+    </ol></div>
+    <div class="card"><h3>Lợi ích</h3><ul>
+      <li>API không giữ 1GB RAM.</li><li>Resume upload.</li><li>Scale worker độc lập.</li>
+      <li>Retry processing không cần upload lại.</li>
+    </ul></div>
+  </div>
+  <div class="prod"><b>Production:</b> checksum, MIME validation, antivirus nếu cần, upload session ID, size limit, lifecycle policy cho blob tạm, dead-letter cho job lỗi.</div>
+</section>
+
+<section id="s10" class="scenario">
+  <h2>10. SQL deadlock</h2>
+  <div class="grid">
+    <div class="card"><h3>Cách điều tra</h3><ol>
+      <li>Capture deadlock graph bằng Extended Events.</li>
+      <li>Xác định 2 transaction và resource đang giữ/chờ.</li>
+      <li>Kiểm tra access order table/index.</li>
+      <li>Giảm transaction duration.</li>
+      <li>Thêm/sửa index nếu scan giữ lock quá nhiều.</li>
+    </ol></div>
+    <div class="card"><h3>Cách phòng</h3><ul>
+      <li>Luôn access resource cùng thứ tự.</li>
+      <li>Transaction càng ngắn càng tốt.</li>
+      <li>Không gọi external API trong transaction.</li>
+      <li>Cân nhắc READ_COMMITTED_SNAPSHOT.</li>
+    </ul></div>
+  </div>
+  <div class="note">Deadlock khác blocking: blocking có thể chờ rồi chạy tiếp; deadlock là cycle nên SQL Server chọn một transaction làm victim.</div>
+  <div class="prod"><b>Production:</b> có thể retry deadlock victim (error 1205), nhưng retry chỉ là safety net; vẫn phải sửa root cause.</div>
+</section>
+
+<section id="s11" class="scenario">
+  <h2>11. Session state làm server memory tăng</h2>
+  <div class="grid">
+    <div class="card"><h3>Vấn đề</h3><ul><li>InProc session nằm trong memory từng instance.</li><li>Scale out dễ mất/không đồng nhất session.</li><li>Object lớn làm memory pressure.</li></ul></div>
+    <div class="card"><h3>Khuyến nghị</h3><ul><li>Ưu tiên stateless API.</li><li>Chỉ lưu session data tối thiểu.</li><li>Nếu bắt buộc: Redis distributed session.</li><li>Set timeout và cleanup.</li></ul></div>
+  </div>
+  <div class="decision"><b>Với API/microservice mới:</b> nên tránh server-side session nếu có thể. Dùng JWT/claims + DB/Redis cho state cần chia sẻ.</div>
+</section>
+
+<section id="s12" class="scenario"><div class="warn"><b>Security lens:</b> SOAP/XML cần kiểm tra <a href="#v-xxe-xml-external-entity">XXE</a>, <a href="#v-xml-injection">XML Injection</a>, <a href="#v-xpath-injection">XPath Injection</a> và giới hạn parser để tránh XML bomb.</div>
+  <h2>12. Tích hợp legacy SOAP service chậm và không ổn định</h2>
+  <div class="grid">
+    <div class="card"><h3>Resilience</h3><ul>
+      <li>Connect/read timeout.</li><li>Retry exponential backoff.</li><li>Circuit breaker.</li>
+      <li>Fallback/cache nếu business cho phép.</li><li>Queue nếu flow không cần sync.</li>
+    </ul></div>
+    <div class="card"><h3>Anti-corruption layer</h3><p>Bọc SOAP bằng một adapter/service nội bộ. Domain code không phụ thuộc trực tiếp WSDL/generated types.</p></div>
+  </div>
+  <div class="note"><b>Retry vs Circuit Breaker:</b> Retry xử lý lỗi ngắn hạn. Circuit breaker dừng gọi tạm thời khi dependency đang fail nhiều, giúp tránh “đánh tiếp vào service đang chết”.</div>
+  <div class="prod"><b>Production:</b> theo dõi latency/error riêng của legacy dependency và đặt timeout thấp hơn timeout của caller.</div>
+</section>
+
+<section id="s13" class="scenario">
+  <h2>13. Gửi email cho hàng triệu user</h2>
+  <div class="grid">
+    <div class="card"><h3>Architecture</h3><ol>
+      <li>API chỉ enqueue email request.</li>
+      <li>Queue/Service Bus buffer workload.</li>
+      <li>Worker scale theo backlog.</li>
+      <li>Email provider: SendGrid/SES/SMTP relay.</li>
+      <li>Webhook cập nhật delivered/bounced/complaint.</li>
+    </ol></div>
+    <div class="card"><h3>Cần quản lý</h3><ul>
+      <li>Rate limit provider.</li><li>Retry transient error.</li><li>Dead-letter queue.</li>
+      <li>Unsubscribe/bounce suppression.</li><li>Template/version.</li><li>Audit status.</li>
+    </ul></div>
+  </div>
+  <div class="prod"><b>Production:</b> không retry vô hạn địa chỉ hard-bounce; phân biệt transient vs permanent failure. Với Service Bus nên lưu business key để handler idempotent.</div>
+</section>
+
+<section id="s14" class="scenario">
+  <h2>14. API gọi nhiều service và phản hồi chậm</h2>
+  <p>Ví dụ A=500ms, B=600ms, C=700ms. Gọi tuần tự ≈ 1.8s; gọi song song ≈ 700ms + overhead.</p>
+<pre><code>var aTask = serviceA.GetAsync(ct);
+var bTask = serviceB.GetAsync(ct);
+var cTask = serviceC.GetAsync(ct);
+
+await Task.WhenAll(aTask, bTask, cTask);
+
+return new AggregateDto(
+    await aTask, await bTask, await cTask);</code></pre>
+  <div class="warn"><b>Không phải lúc nào cũng parallel.</b> Nếu B phụ thuộc output của A thì bắt buộc tuần tự. Parallel quá nhiều có thể làm downstream quá tải.</div>
+  <div class="grid">
+    <div class="card"><h3>Tối ưu thêm</h3><ul><li>Cache dữ liệu read-heavy.</li><li>Chỉ lấy field cần thiết.</li><li>Batch API.</li><li>Reduce chatty calls.</li></ul></div>
+    <div class="card"><h3>Resilience</h3><ul><li>Timeout từng dependency.</li><li>Fallback / graceful degradation.</li><li>Bulkhead/concurrency limit.</li></ul></div>
+  </div>
+  <div class="prod"><b>Production:</b> nếu endpoint fan-out tới 10 service, xác suất có ít nhất một service lỗi tăng mạnh. Thiết kế partial response hoặc degrade feature nếu business cho phép.</div>
+</section>
+
+<section id="s15" class="scenario"><div class="warn"><b>Security lens:</b> microservices làm auth/API surface tăng. Ưu tiên policy-based authorization, JWT validation, secret management, CORS và data minimization.</div>
+  <h2>15. Migrating monolithic .NET application to microservices</h2>
+  <div class="grid">
+    <div class="card"><h3>Không nên bắt đầu bằng “split code”</h3><ol>
+      <li>Xác định bounded context/domain boundary.</li>
+      <li>Đo coupling và dependency.</li>
+      <li>Chọn một capability có value rõ để tách đầu tiên.</li>
+      <li>Thiết kế API/event contract.</li>
+      <li>Tách data ownership.</li>
+      <li>Observability + deployment độc lập.</li>
+    </ol></div>
+    <div class="card"><h3>Pattern hữu ích</h3><ul>
+      <li>Strangler Fig.</li><li>API Gateway.</li><li>Outbox pattern.</li>
+      <li>Saga.</li><li>Event-driven integration.</li><li>Database per service.</li>
+    </ul></div>
+  </div>
+  <table>
+    <tr><th>Kiểu giao tiếp</th><th>Dùng khi</th><th>Trade-off</th></tr>
+    <tr><td>REST/gRPC</td><td>Cần response ngay</td><td>Temporal coupling</td></tr>
+    <tr><td>Service Bus/Kafka/Event Hubs</td><td>Async/event-driven</td><td>Eventual consistency</td></tr>
+  </table>
+  <div class="note"><b>Azure mapping:</b> API Management/App Gateway → AKS/ACA services → Service Bus/Event Hubs/Kafka → SQL/Redis/Blob → App Insights/OpenTelemetry.</div>
+  <div class="prod"><b>Production:</b> microservices không tự động tốt hơn monolith. Nếu team nhỏ, domain đơn giản, deployment không phải pain point thì modular monolith thường rẻ và ổn định hơn.</div>
+</section>
+
+
+<section id="security-overview" class="section">
+<h2>16. .NET Security Deep Dive — 53 vulnerabilities từ “The Most Vulnerable .NET App”</h2>
+<p>Repository này là dự án giáo dục chứa code cố ý không an toàn. Danh mục trong source hiện có <b>53 vulnerabilities</b>, chia thành 10 nhóm. Severity bên dưới giữ theo chính repository; phần “áp dụng production” được mở rộng theo bối cảnh ASP.NET Core/Azure.</p>
+<div class="warn"><b>Cách đọc:</b> ví dụ “❌ Vulnerable” chỉ để code review/lab nội bộ. Không copy vào production. Khi đánh giá thực tế, ưu tiên <b>exploitability × data/permission exposed × blast radius</b>, không chỉ nhìn tên CWE.</div>
+<style>
+.sev-critical{color:#ff8585;font-weight:700}.sev-high{color:#ffd166;font-weight:700}.sev-medium{color:#76c7ff;font-weight:700}
+.vuln{border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:18px;margin:14px 0}
+.vuln h3{margin:0 0 4px}.meta{color:var(--muted);font-size:.9rem;margin-bottom:10px}
+.mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:800px){.mini-grid{grid-template-columns:1fr}}
+</style>
+<table>
+<tr><th>Nhóm</th><th>Số mục</th><th>Risk nổi bật</th></tr>
+<tr><td>Injection</td><td>11</td><td>RCE / data access / logic bypass</td></tr>
+<tr><td>XSS</td><td>7</td><td>Browser/session compromise</td></tr>
+<tr><td>Authentication & Authorization</td><td>7</td><td>Account/role/tenant compromise</td></tr>
+<tr><td>Cryptography</td><td>6</td><td>MITM / credential cracking / weak confidentiality</td></tr>
+<tr><td>Sensitive Data Exposure</td><td>5</td><td>Secret/PII leakage</td></tr>
+<tr><td>XML & Serialization</td><td>5</td><td>RCE / SSRF / DoS</td></tr>
+<tr><td>File Operations</td><td>3</td><td>File read/write / overwrite</td></tr>
+<tr><td>SSRF</td><td>2</td><td>Internal service/metadata access</td></tr>
+<tr><td>Business Logic</td><td>3</td><td>Financial/inventory/authorization abuse</td></tr>
+<tr><td>API Security</td><td>4</td><td>DoS / cross-origin abuse / data exposure</td></tr>
+</table>
+</section>
+
+<section id="sec-injection" class="section"><h2>A. Injection Attacks</h2>
+
+<article id="v-sql-injection" class="vuln">
+<h3>SQL Injection</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-89</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Query SQL được ghép chuỗi trực tiếp từ input: search, sort, filter, login, report parameter.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>API tìm order nhận `customerName`; code ghép `WHERE CustomerName = &#x27;...&#x27;`. Input trở thành một phần cú pháp SQL thay vì chỉ là dữ liệu.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Rò rỉ/sửa/xóa dữ liệu; bypass authentication; có thể ảnh hưởng toàn DB tùy quyền của account ứng dụng.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search source cho `FromSqlRaw`, `ExecuteSqlRaw`, string interpolation/concatenation gần SQL; xem SQL Query/DB audit bất thường.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌ Vulnerable
+var sql = $&quot;SELECT * FROM Orders WHERE CustomerName = &#x27;{name}&#x27;&quot;;
+var rows = db.Database.SqlQueryRaw&lt;Order&gt;(sql);
+
+// ✅ Safer
+var rows = await db.Orders
+    .Where(x =&gt; x.CustomerName == name)
+    .ToListAsync(ct);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dùng LINQ/EF parameterization hoặc SQL parameters; tài khoản DB least privilege; không cho input điều khiển tên table/column nếu chưa allow-list.</div>
+</article>
+
+
+<article id="v-command-injection" class="vuln">
+<h3>Command Injection</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-78</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Ứng dụng gọi shell/OS command và ghép input user vào command line.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Endpoint diagnostics cho phép user nhập hostname rồi chạy `cmd /c ping {host}`. Nếu shell parse thêm control characters thì input có thể biến thành command khác.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Remote command execution với quyền của process/container; đọc secret, sửa file, lateral movement.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm `Process.Start`, `cmd.exe`, `powershell`, `/bin/sh`, `bash -c`; quan sát child-process bất thường từ app.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌ Vulnerable
+Process.Start(&quot;cmd.exe&quot;, $&quot;/c ping {host}&quot;);
+
+// ✅ Better: tránh shell và allow-list input
+if (!Regex.IsMatch(host, @&quot;^[a-zA-Z0-9.-]+$&quot;))
+    return BadRequest();
+Process.Start(new ProcessStartInfo(&quot;ping&quot;, host) { UseShellExecute = false });</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Tránh shell; dùng API/library tương ứng; allow-list input; chạy container/user không đặc quyền; egress/network policy.</div>
+</article>
+
+
+<article id="v-ldap-injection" class="vuln">
+<h3>LDAP Injection</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-90</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>LDAP filter được ghép từ username/search text mà không escape ký tự LDAP đặc biệt.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Ứng dụng tra user AD bằng filter kiểu `(&amp;(objectClass=user)(uid={username}))`; input làm thay đổi cấu trúc filter.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Bypass filter, đọc user/group không mong muốn, có thể làm sai logic authorization.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search code tạo `DirectorySearcher.Filter`; log các filter lỗi/return count bất thường.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+var filter = $&quot;(&amp;(objectClass=user)(uid={username}))&quot;;
+
+// ✅
+var safe = EscapeLdapFilter(username);
+var filter = $&quot;(&amp;(objectClass=user)(uid={safe}))&quot;;</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Escape theo LDAP filter rules; allow-list format username; không dùng query LDAP cho authorization nếu có thể lấy claims/groups tin cậy.</div>
+</article>
+
+
+<article id="v-log-injection-log-forging" class="vuln">
+<h3>Log Injection (Log Forging)</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-117</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Đưa input trực tiếp vào log text, đặc biệt có CR/LF, khiến attacker tạo dòng log giả hoặc phá parser.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>API log `Login failed for {username}` nhưng username có newline → SIEM nhìn như có thêm một event hợp lệ.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Làm sai audit trail, che dấu hành vi, gây alert giả; nguy hiểm cao hơn trong security/audit logs.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm string concatenation trong logging; kiểm tra log chứa newline/control chars từ request fields.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+logger.LogInformation(&quot;User input: &quot; + input);
+
+// ✅ structured logging
+logger.LogInformation(&quot;User input: {Input}&quot;, SanitizeForLog(input));</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Structured logging; encode/strip CRLF khi log raw input; giới hạn độ dài; không log nguyên request body.</div>
+</article>
+
+
+<article id="v-xpath-injection" class="vuln">
+<h3>XPath Injection</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-643</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>XPath expression được nối chuỗi từ input thay vì parameter/biến an toàn.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>XML user store dùng `SelectSingleNode(&quot;//user[name=&#x27;&quot; + name + &quot;&#x27;]&quot;)`; input thay đổi predicate.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Bypass login/filter, đọc node nhạy cảm trong XML.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm `SelectSingleNode/SelectNodes` với interpolation/concatenation.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+var node = doc.SelectSingleNode($&quot;//user[name=&#x27;{name}&#x27;]&quot;);
+
+// ✅
+var nodes = doc.SelectNodes(&quot;//user&quot;)!
+    .Cast&lt;XmlNode&gt;()
+    .Where(x =&gt; x[&quot;name&quot;]?.InnerText == name);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Không xây XPath từ input; dùng parser + compare value; nếu library hỗ trợ XPath variables thì bind variables.</div>
+</article>
+
+
+<article id="v-xml-injection" class="vuln">
+<h3>XML Injection</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-91</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Tạo XML bằng string concatenation từ input.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Service SOAP/XML tự ghép `&lt;name&gt;{name}&lt;/name&gt;`; input chứa markup làm sinh thêm element hoặc thay đổi cấu trúc message.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Thay đổi dữ liệu/message, bypass validation, có thể kết hợp XXE/XPath ở downstream.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm XML tạo bằng `$&quot;&lt;...{input}...&gt;&quot;`; parse sample payload qua schema validation.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+var xml = $&quot;&lt;user&gt;&lt;name&gt;{name}&lt;/name&gt;&lt;/user&gt;&quot;;
+
+// ✅
+var doc = new XDocument(
+    new XElement(&quot;user&quot;, new XElement(&quot;name&quot;, name)));</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dùng `XElement`, `XmlWriter`; validate schema; không tin content-type là đủ.</div>
+</article>
+
+
+<article id="v-crlf-injection" class="vuln">
+<h3>CRLF Injection</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-93</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Input đi vào HTTP header, email header hoặc log mà không chặn `\r\n`.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Redirect/location hoặc custom header lấy trực tiếp từ query parameter.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Header injection, response splitting, cookie/header giả; tùy proxy/framework có thể đã chặn một phần.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm chỗ set `Response.Headers[...]` từ input; test CR/LF được reject ở boundary.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+Response.Headers.Location = returnUrl;
+
+// ✅
+if (!Url.IsLocalUrl(returnUrl)) returnUrl = &quot;/&quot;;
+return LocalRedirect(returnUrl);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Framework API thay vì raw headers; reject CR/LF; allow-list redirect targets; canonicalize input.</div>
+</article>
+
+
+<article id="v-expression-language-injection-dynamic-linq" class="vuln">
+<h3>Expression Language Injection (Dynamic LINQ)</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-917</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Cho user gửi nguyên biểu thức Dynamic LINQ/filter expression và evaluate trực tiếp.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Report API nhận `filter=...` rồi truyền thẳng vào `Where(filter)`; user có thể thay logic filter hoặc gây expression rất tốn CPU.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Bypass business filter, lộ dữ liệu, DoS; mức nguy hiểm tăng nếu expression engine cho gọi type/method nhạy cảm.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm `System.Linq.Dynamic.Core`, expression evaluator nhận raw string từ HTTP.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+query = query.Where(userExpression);
+
+// ✅ map input fields to known predicates
+if (request.MinPrice is not null)
+    query = query.Where(x =&gt; x.Price &gt;= request.MinPrice);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Thiết kế filter DTO có field/operator allow-list; giới hạn complexity; không expose general-purpose evaluator.</div>
+</article>
+
+
+<article id="v-template-injection" class="vuln">
+<h3>Template Injection</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-1336</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Template do user kiểm soát được compile/evaluate bằng engine có khả năng truy cập object/type.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Hệ thống email cho admin/user nhập template và render như Razor code thay vì chỉ dùng placeholder.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Server-side code execution hoặc đọc secret tùy engine/sandbox.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search template engines + template text đến từ DB/user upload; review quyền edit template.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌ concept
+var result = await razorEngine.CompileRenderStringAsync(userTemplate, model);
+
+// ✅ template do hệ thống sở hữu
+var template = await templateStore.GetApprovedTemplateAsync(templateId);
+var result = SafeRender(template, model);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Template phải là trusted content; dùng engine logic-less/limited; allow-list placeholders; tách service render với quyền tối thiểu.</div>
+</article>
+
+
+<article id="v-code-injection-csharpscript" class="vuln">
+<h3>Code Injection (CSharpScript)</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-94</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Ứng dụng chạy C# script/expression lấy từ user bằng Roslyn scripting.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Rule engine nhận `expression` từ request và gọi `CSharpScript.EvaluateAsync(expression)`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>RCE trong process, truy cập filesystem/network/secret nếu không sandbox.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm `CSharpScript`, `Assembly.Load`, reflection/dynamic compilation từ untrusted input.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+var result = await CSharpScript.EvaluateAsync(userCode);
+
+// ✅
+var result = EvaluateBusinessRule(request.RuleId, request.Parameters);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Không chạy code user trong app process; dùng DSL giới hạn; nếu bắt buộc, sandbox tách biệt OS/container cực chặt và deny network/secret.</div>
+</article>
+
+
+<article id="v-json-injection" class="vuln">
+<h3>JSON Injection</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-91</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Tạo JSON bằng ghép chuỗi thay vì serializer.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>API dựng profile JSON với `$&quot;{{\&quot;name\&quot;:\&quot;{name}\&quot;,...}}&quot;`; dấu quote trong input phá cấu trúc JSON.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Thay đổi field, thêm flag logic nếu downstream tin JSON; có thể gây parse errors.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm JSON string literal + interpolation; review manual escaping.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌
+var json = $&quot;{{\&quot;name\&quot;:\&quot;{name}\&quot;,\&quot;bio\&quot;:\&quot;{bio}\&quot;}}&quot;;
+
+// ✅
+var json = JsonSerializer.Serialize(new { name, bio });</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dùng `System.Text.Json`/serializer; DTO typed; validate input/domain fields.</div>
+</article>
+
+</section>
+<section id="sec-xss" class="section"><h2>B. Cross-Site Scripting (XSS)</h2>
+
+<article id="v-reflected-xss" class="vuln">
+<h3>Reflected XSS</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-79</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Input từ URL/form được render ngay vào HTML mà không context-encode.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Trang search render query text bằng raw HTML.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Chạy JS trong browser nạn nhân; đánh cắp dữ liệu accessible bởi JS, thực hiện action với session.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Tìm `Html.Raw`, `MarkupString`, `innerHTML`; CSP report violations.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌ @((MarkupString)searchText)
+// ✅ @searchText  // Razor/Blazor encode mặc định</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Giữ auto-encoding; sanitize nếu thật sự cho phép HTML; CSP là defense-in-depth.</div>
+</article>
+
+
+<article id="v-stored-xss" class="vuln">
+<h3>Stored XSS</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-79</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Nội dung user được lưu DB rồi render raw cho nhiều user.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Comment/ticket description chứa HTML rồi trang admin render bằng `Html.Raw`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Ảnh hưởng nhiều user, đặc biệt admin; persistence làm blast radius lớn.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Scan fields rich-text; test output encoding; CSP reporting.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌ @Html.Raw(Model.Comment)
+// ✅ @Model.Comment
+// Nếu cho rich text: sanitize bằng allow-list HTML.</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Encode on output theo context; sanitize rich text; cookie HttpOnly/SameSite; CSP.</div>
+</article>
+
+
+<article id="v-xss-with-js-interop-dom-xss" class="vuln">
+<h3>XSS With JS Interop / DOM XSS</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-79</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>JS dùng `eval`, `innerHTML`, `document.write` với dữ liệu user.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Blazor gọi JS interop để gắn HTML từ query param vào DOM.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Chạy script client-side dù server đã encode đúng.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search JS sinks `innerHTML`, `eval`, `insertAdjacentHTML`; browser DevTools/CSP.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌ element.innerHTML = userInput;
+// ✅ element.textContent = userInput;</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dùng `textContent`; sanitizer; tránh eval; Trusted Types nếu phù hợp.</div>
+</article>
+
+
+<article id="v-xss-via-attributes" class="vuln">
+<h3>XSS via Attributes</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-79</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Input được chèn vào `href`, `style`, event attribute hoặc attribute value không đúng context.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Link profile lấy URL do user nhập và bind raw.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Có thể chạy JS hoặc điều hướng phishing tùy attribute.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review dynamic href/src/style; test schemes bất thường.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ Validate URL scheme, chỉ cho https/http cần thiết.
+if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme != Uri.UriSchemeHttps) reject;</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Context-aware encoding + allow-list scheme/domain; không tạo event handlers từ input.</div>
+</article>
+
+
+<article id="v-xss-via-css" class="vuln">
+<h3>XSS via CSS</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-79</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Cho user control nguyên CSS/style string hoặc thoát khỏi attribute style.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Theme color được ghép thẳng vào `style=&quot;color:{input}&quot;`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Modern browser đã giảm nhiều legacy CSS execution vector, nhưng breakout/HTML injection vẫn có thể thành XSS.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search inline styles built from untrusted input.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ map enum/known values
+var cssClass = theme switch { &quot;dark&quot; =&gt; &quot;theme-dark&quot;, _ =&gt; &quot;theme-default&quot; };</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dùng class allow-list; không nhận raw CSS; CSP `style-src` phù hợp.</div>
+</article>
+
+
+<article id="v-xss-via-svg" class="vuln">
+<h3>XSS via SVG</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-79</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Cho upload/render inline SVG không sanitize; SVG có thể chứa script/event/external refs.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>User upload logo SVG rồi server trả inline cùng origin.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Script chạy cùng origin, có thể truy cập app data tùy context.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Kiểm tra upload MIME/content; tìm `&lt;script&gt;`, event attrs, external refs.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ tốt nhất rasterize/serve as attachment hoặc sanitize SVG allow-list</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Không inline SVG untrusted; sanitize/rasterize; separate origin for user content; CSP.</div>
+</article>
+
+
+<article id="v-xss-via-file-upload" class="vuln">
+<h3>XSS via File Upload</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-79</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Upload HTML/SVG rồi phục vụ lại với `text/html` cùng app origin.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Attachment `.html` được lưu dưới `wwwroot/uploads` và mở trực tiếp.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Stored XSS qua file, phishing trên trusted domain.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review static file paths/content-type; enumerate upload extensions.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ store outside web root; force Content-Disposition: attachment; generate server-side name</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Allow-list file types; sniff/magic validation; separate storage/domain; attachment disposition.</div>
+</article>
+
+</section>
+<section id="sec-auth" class="section"><h2>C. Authentication &amp; Authorization</h2>
+
+<article id="v-hardcoded-credentials" class="vuln">
+<h3>Hardcoded Credentials</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-798</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Password/API secret nằm trong source, appsettings committed, Dockerfile/YAML.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Connection string hoặc service account secret xuất hiện trong repo.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Ai có repo/build logs/image có thể lấy secret; rotate khó; lateral movement.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Secret scanning GitHub/Snyk; search repo/history; scan container image.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ❌ const string ApiKey = &quot;...&quot;;
+// ✅ Key Vault + Managed Identity / workload identity</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Azure Key Vault, Managed Identity, federated identity; rotate; secret scanning pre-commit/CI.</div>
+</article>
+
+
+<article id="v-missing-authorization-check" class="vuln">
+<h3>Missing Authorization Check</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-862</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Endpoint có authentication hoặc thậm chí public nhưng không kiểm quyền resource/action.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`DELETE /api/users/{id}` không có `[Authorize(Policy=...)]`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>User thường có thể gọi admin API trực tiếp dù UI đã ẩn button.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Inventory endpoints; integration test 401/403 theo role/policy.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>[Authorize(Policy = &quot;UserAdmin&quot;)]
+[HttpDelete(&quot;{id}&quot;)]
+public Task&lt;IActionResult&gt; Delete(...)</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Default-deny authorization; policy-based auth; test mỗi sensitive endpoint.</div>
+</article>
+
+
+<article id="v-insecure-direct-object-reference-idor" class="vuln">
+<h3>Insecure Direct Object Reference (IDOR)</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-639</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Server chỉ nhận object ID nhưng không kiểm object thuộc tenant/user hiện tại.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`GET /orders/123` chỉ query theo Id; user đổi 123→124 thấy order người khác.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Rò rỉ/sửa dữ liệu cross-user/cross-tenant; rất phổ biến trong API.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Test đổi IDs/tenant IDs; authorization unit/integration tests.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var order = await db.Orders.SingleOrDefaultAsync(x =&gt; x.Id == id &amp;&amp; x.TenantId == currentTenantId);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Luôn scope query theo owner/tenant; policy/resource-based authorization; không coi GUID là security control.</div>
+</article>
+
+
+<article id="v-weak-password-requirements" class="vuln">
+<h3>Weak Password Requirements</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-521</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Cho mật khẩu quá ngắn/phổ biến và không chống password spraying.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>User có thể đặt password rất phổ biến.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Account takeover, đặc biệt nếu credential reused.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Theo dõi failed logins/spraying; audit password policy.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ASP.NET Core Identity: set meaningful min length; block breached/common passwords; MFA for sensitive apps.</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Mật khẩu dài, block common/breached password, MFA, lockout/risk controls; không ép đổi định kỳ vô lý.</div>
+</article>
+
+
+<article id="v-broken-jwt-implementation" class="vuln">
+<h3>Broken JWT Implementation</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-347</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Tự parse JWT payload hoặc disable signature/issuer/audience/lifetime validation.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>API base64-decode payload rồi tin claim `role=admin`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Giả mạo identity/role, toàn bộ auth bị bypass.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review JwtBearer config; negative tests token sai signature/issuer/audience/expiry.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>builder.Services.AddAuthentication().AddJwtBearer(o =&gt; {
+  o.TokenValidationParameters.ValidateIssuerSigningKey = true;
+  o.TokenValidationParameters.ValidateIssuer = true;
+  o.TokenValidationParameters.ValidateAudience = true;
+  o.TokenValidationParameters.ValidateLifetime = true;
+});</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dùng framework validation; pin algorithms/authority; key rotation; không tin token chỉ vì decode được.</div>
+</article>
+
+
+<article id="v-privilege-escalation" class="vuln">
+<h3>Privilege Escalation</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-269</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Binding model cho phép client gửi field quyền hạn như Role/IsAdmin/TenantId.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Edit profile DTO dùng entity `User` trực tiếp, client gửi thêm `IsAdmin=true`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>User nâng quyền hoặc chuyển tenant.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review request DTOs/entity binding; test over-posting hidden fields.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>public record UpdateProfileRequest(string DisplayName, string Phone);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dedicated request DTO; server-side role assignment; authorization cho privileged changes; audit.</div>
+</article>
+
+
+<article id="v-password-reset-poisoning" class="vuln">
+<h3>Password Reset Poisoning</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-640</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Tạo reset link dựa trên untrusted Host/X-Forwarded-Host header.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`https://{Request.Host}/reset?token=...` trong email.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Nạn nhân click link tới domain attacker và lộ reset token.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review link generation; proxy forwarded headers; Host allow-list.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ use configured public origin
+var link = $&quot;{options.PublicBaseUrl}/reset?token={UrlEncoder.Default.Encode(token)}&quot;;</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Public base URL cấu hình cố định; KnownProxies/KnownNetworks; AllowedHosts; token one-time/short TTL.</div>
+</article>
+
+</section>
+<section id="sec-crypto" class="section"><h2>D. Cryptography</h2>
+
+<article id="v-weak-hashing-md5-sha1" class="vuln">
+<h3>Weak Hashing (MD5/SHA1)</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-327</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Dùng MD5/SHA1 cho password/signature/security-sensitive hash.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Password được `SHA1(password)` rồi lưu DB.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Brute force/rainbow table nhanh; collision với hash dùng integrity/signature.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `MD5.Create`, `SHA1.Create`; inspect DB password hash format.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ passwords: ASP.NET Core Identity PasswordHasher / PBKDF2/Argon2id/bcrypt</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Password hashing chuyên dụng có salt+work factor; SHA-256/512 chỉ cho non-password hash phù hợp.</div>
+</article>
+
+
+<article id="v-predictable-random-numbers" class="vuln">
+<h3>Predictable Random Numbers</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-338</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Dùng `System.Random` cho token reset, OTP, API key, nonce.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Reset token lấy từ `Random.Next()` nên có thể đoán nếu biết seed/time.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Token/OTP/session có thể đoán → account takeover.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `new Random()` trong security code.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dùng `RandomNumberGenerator`; đủ entropy; TTL/one-time use.</div>
+</article>
+
+
+<article id="v-ecb-mode-encryption" class="vuln">
+<h3>ECB Mode Encryption</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-327</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>AES ECB mã hóa mỗi block độc lập, block plaintext giống nhau → ciphertext giống nhau.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Mã hóa structured record có patterns lặp lại.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Rò pattern và không cung cấp integrity; dữ liệu có thể bị tamper tùy scheme.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `CipherMode.ECB`; crypto review.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ use authenticated encryption
+using var aes = new AesGcm(key, 16);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> AES-GCM/ChaCha20-Poly1305; unique nonce; quản lý key đúng.</div>
+</article>
+
+
+<article id="v-insufficient-key-length" class="vuln">
+<h3>Insufficient Key Length</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-326</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Dùng DES/3DES hoặc RSA/key quá ngắn theo chuẩn hiện tại.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Legacy integration vẫn dùng DES 56-bit.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Brute-force/future-proof kém; compliance issue.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `DES`, `TripleDES`, RSA key size.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ AES-256 or AES-128; RSA &gt;= 2048 where RSA is required</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Modern algorithms/key sizes; follow platform defaults/policy; plan migration legacy.</div>
+</article>
+
+
+<article id="v-no-salt-in-password-hashing" class="vuln">
+<h3>No Salt in Password Hashing</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-759</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Hai user cùng password có hash giống nhau vì không có unique salt.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>DB lưu `SHA256(password)` trực tiếp.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Rainbow table, phát hiện password reuse, crack nhiều account cùng lúc.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Compare hash patterns/length; inspect implementation.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ PasswordHasher&lt;TUser&gt; generates salt/work factor per password</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Unique random salt per password + slow KDF; store parameters/version.</div>
+</article>
+
+
+<article id="v-improper-certificate-validation" class="vuln">
+<h3>Improper Certificate Validation</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-295</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Code chấp nhận mọi TLS certificate hoặc custom callback luôn true.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>HttpClientHandler `ServerCertificateCustomValidationCallback = (_,_,_,_) =&gt; true`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>MITM đọc/sửa traffic, đánh cắp token/API key; đặc biệt nguy hiểm trong internal network.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search callback validation, `DangerousAcceptAnyServerCertificateValidator`; inspect logs/TLS.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ remove override; trust OS/enterprise CA store
+var client = httpClientFactory.CreateClient(&quot;partner&quot;);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Không disable validation; sửa chain/SAN/SNI đúng; nếu private CA thì distribute CA đúng cách; pinning chỉ khi có lifecycle rõ.</div>
+</article>
+
+</section>
+<section id="sec-sensitive" class="section"><h2>E. Sensitive Data Exposure</h2>
+
+<article id="v-sensitive-data-in-logs" class="vuln">
+<h3>Sensitive Data in Logs</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-532</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Log password, JWT, API key, connection string, card/PII hoặc full request body.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Middleware log toàn bộ Authorization header và body.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Bất kỳ ai có quyền log/APM/SIEM có thể lấy secret; retention làm blast radius lâu.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search log fields; DLP/secret scanning; sample App Insights traces.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>logger.LogInformation(&quot;Login failed for UserId={UserId}&quot;, userId); // không log password/token</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Redaction; structured allow-list fields; access control/retention; never log auth headers/secrets.</div>
+</article>
+
+
+<article id="v-verbose-error-messages" class="vuln">
+<h3>Verbose Error Messages</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-209</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Production trả stack trace, SQL error, path, connection info.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Controller catch Exception rồi `return BadRequest(ex.ToString())`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Giúp attacker reconnaissance; lộ schema/path/secrets trong exception.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Check production responses 500; environment config.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>return Problem(title:&quot;Unexpected error&quot;, statusCode:500, extensions:new(){[&quot;traceId&quot;]=Activity.Current?.Id});</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Global exception handler; generic external error + traceId; detail chỉ ở protected logs.</div>
+</article>
+
+
+<article id="v-directory-listing" class="vuln">
+<h3>Directory Listing</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-548</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Web server/static middleware cho browse directory.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>IIS/NGINX/static server hiện danh sách `/backup/`, `/uploads/`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Lộ backup/config/source files, tên file giúp reconnaissance.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Web server config scan; crawl common directories.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// Disable directory browsing; serve only explicit static roots.</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Disable listing; không deploy secret/backup vào web root; storage private by default.</div>
+</article>
+
+
+<article id="v-sensitive-data-in-urls" class="vuln">
+<h3>Sensitive Data in URLs</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-598</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Token/password/PII nằm query string.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`/reset?password=...` hoặc API key query param.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>URL đi vào browser history, proxy logs, referrer, APM.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search routes/query parameters; inspect access logs.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ use Authorization header/body; reset token URL chỉ nên short-lived + single-use</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Headers/body; redact query logs; `Referrer-Policy`; token short TTL/one-time.</div>
+</article>
+
+
+<article id="v-api-keys-exposure" class="vuln">
+<h3>API Keys Exposure</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-798</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Secret được gửi xuống SPA/JavaScript/mobile bundle hoặc public config.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Vue app có `VITE_API_SECRET` gọi trực tiếp partner API.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Bất kỳ user nào mở DevTools đều lấy key; không thể coi front-end secret là secret.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Scan JS bundles/source maps; secret scanning.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ browser -&gt; your backend -&gt; partner; backend gets secret from Key Vault</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Không đặt server secret ở client; BFF/backend proxy; Managed Identity/OAuth delegated flows.</div>
+</article>
+
+</section>
+<section id="sec-xml" class="section"><h2>F. XML &amp; Serialization</h2>
+
+<article id="v-xxe-xml-external-entity" class="vuln">
+<h3>XXE (XML External Entity)</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-611</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>XML parser cho phép DTD/external entity với XML untrusted.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>SOAP/upload XML có DOCTYPE; parser resolve local/network resources.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Đọc local file, SSRF, DoS; tùy parser/config.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `XmlResolver`, `DtdProcessing.Parse`; test parser config.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Disable DTD/external entities; schema/size limits; network egress controls.</div>
+</article>
+
+
+<article id="v-insecure-deserialization-binaryformatter" class="vuln">
+<h3>Insecure Deserialization (BinaryFormatter)</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-502</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Deserialize BinaryFormatter/unsafe formatter từ dữ liệu user.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>API nhận base64 blob và `BinaryFormatter.Deserialize`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Gadget chain có thể dẫn tới RCE; .NET đã deprecate/disable BinaryFormatter trong modern versions.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `BinaryFormatter`, `LosFormatter`, unsafe serializers.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ use typed JSON/Protobuf with explicit contracts; never BinaryFormatter for untrusted data</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Loại bỏ BinaryFormatter; typed serializer; integrity/authenticate data.</div>
+</article>
+
+
+<article id="v-json-deserialization-attacks" class="vuln">
+<h3>JSON Deserialization Attacks</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-502</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>JSON.NET bật type metadata cho untrusted JSON (`TypeNameHandling` nguy hiểm).</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Deserializer cho client chỉ định `$type` và instantiate type ngoài dự kiến.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Có thể instantiate gadget/type nguy hiểm → RCE/side effects.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `TypeNameHandling.Auto/All/Objects`; custom binder.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Không cho client chọn CLR type; typed DTO; nếu polymorphic thì discriminator allow-list.</div>
+</article>
+
+
+<article id="v-xml-bomb-billion-laughs" class="vuln">
+<h3>XML Bomb (Billion Laughs)</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-776</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Parser expand entity đệ quy hoặc không giới hạn document/entity size.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>XML nhỏ expand thành lượng text cực lớn làm cạn RAM/CPU.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>DoS memory/CPU.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Monitor request size, memory spike; parser settings.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, MaxCharactersInDocument = 5_000_000 };</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Prohibit DTD; size/depth/time limits; request body limits.</div>
+</article>
+
+
+<article id="v-insecure-yaml-deserialization" class="vuln">
+<h3>Insecure YAML Deserialization</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-502</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>YAML deserializer tạo arbitrary runtime types từ untrusted YAML.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Upload config YAML được deserialize với unrestricted tags/type resolution.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Gadget/side-effect execution hoặc logic manipulation tùy library.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review YamlDotNet config/type converters; search untrusted YAML upload.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ deserialize to explicit DTO; deny arbitrary tags/types</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Typed schema/DTO; safe deserializer config; reject unknown tags; patch dependencies.</div>
+</article>
+
+</section>
+<section id="sec-file" class="section"><h2>G. File Operations</h2>
+
+<article id="v-path-traversal" class="vuln">
+<h3>Path Traversal</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-22</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Ghép filename/path từ user vào filesystem path.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`GET /download?file=../../...` và `Path.Combine(root,file)` không đảm bảo path vẫn trong root.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Đọc config/secret/source; nếu write thì có thể overwrite file.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search `Path.Combine` với request input; test canonical path boundary.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var full = Path.GetFullPath(Path.Combine(root, file));
+if (!full.StartsWith(Path.GetFullPath(root), StringComparison.OrdinalIgnoreCase)) return BadRequest();</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Server-generated IDs; canonicalize + root boundary; allow-list names/extensions; least filesystem permissions.</div>
+</article>
+
+
+<article id="v-zip-slip" class="vuln">
+<h3>Zip Slip</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-22</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Extract ZIP entries theo `entry.FullName` mà không check canonical path.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Archive chứa entry path thoát khỏi extract directory.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Overwrite file ngoài thư mục extract; có thể thành RCE nếu ghi vào executable/config/web root.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review zip extraction loops; scan archive entry names.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var dest = Path.GetFullPath(Path.Combine(extractRoot, entry.FullName));
+if (!dest.StartsWith(rootFull)) reject;</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Canonical path check từng entry; reject absolute/parent paths; size/count limits.</div>
+</article>
+
+
+<article id="v-arbitrary-file-write" class="vuln">
+<h3>Arbitrary File Write</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-73</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>User kiểm soát path/filename đích ghi file.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Upload API cho `targetPath` tùy ý rồi `File.WriteAllBytes(targetPath, ...)`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Overwrite config/code/startup file, persistence/RCE tùy quyền.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Search write APIs với request path; file integrity monitoring.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>var safeName = Guid.NewGuid().ToString(&quot;N&quot;);
+var path = Path.Combine(uploadRoot, safeName);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Server chooses path/name; upload outside web root; least OS permissions; immutable container filesystem nơi có thể.</div>
+</article>
+
+</section>
+<section id="sec-ssrf" class="section"><h2>H. Server-Side Request Forgery (SSRF)</h2>
+
+<article id="v-basic-ssrf" class="vuln">
+<h3>Basic SSRF</h3>
+<div class="meta"><span class="sev-critical">Critical</span> · CWE-918</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Backend fetch URL do user cung cấp.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Image preview/webhook tester nhận URL và `HttpClient.GetAsync(url)`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Backend có thể truy cập internal services, metadata endpoint, localhost, private IP mà user không truy cập trực tiếp.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Log outbound destinations; egress monitoring; review URL-fetch features.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ Prefer allow-listed hosts + DNS/IP validation + egress firewall</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Allow-list scheme+host; resolve DNS và chặn private/link-local/loopback; disable redirects hoặc revalidate; egress network policy/firewall.</div>
+</article>
+
+
+<article id="v-ssrf-via-file-upload" class="vuln">
+<h3>SSRF via File Upload</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-918</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Uploaded XML/SVG/document chứa external reference, parser/converter tự fetch URL.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>SVG/XML processor tải external image/schema/font.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>SSRF gián tiếp, metadata/internal service access.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review document converters/parsers; outbound calls từ worker.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>// ✅ parser resolver disabled; converter run in network-isolated worker</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Disable external resource loading; sandbox processing; egress deny-by-default; file type validation.</div>
+</article>
+
+</section>
+<section id="sec-business" class="section"><h2>I. Business Logic Flaws</h2>
+
+<article id="v-negative-quantities" class="vuln">
+<h3>Negative Quantities</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-20</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Chỉ validate kiểu dữ liệu mà không validate invariant nghiệp vụ.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Order API cho quantity=-5 → total âm/stock tăng sai.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Mất tiền, sai inventory/accounting; có thể không bị SAST phát hiện.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Boundary/abuse-case tests; anomaly detection totals âm.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>if (request.Quantity &lt;= 0 || request.Quantity &gt; 1000) return ValidationProblem();</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Domain validation server-side; DB constraints nơi phù hợp; không tin UI validation.</div>
+</article>
+
+
+<article id="v-mass-assignment" class="vuln">
+<h3>Mass Assignment</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-915</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Bind request trực tiếp vào entity có field nhạy cảm.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`UpdateUser(User entity)` cho phép client gửi Role/IsApproved/CreditLimit.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Privilege escalation/data tampering.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Fuzz request với extra fields; review controller actions.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>public record UpdateUserRequest(string DisplayName, string Phone);</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Dedicated DTO/commands; explicit mapping; reject/ignore unknown sensitive fields.</div>
+</article>
+
+
+<article id="v-integer-overflow" class="vuln">
+<h3>Integer Overflow</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-190</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Phép toán integral overflow làm wrap/truncate, nhất là quantity*price/size.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`int totalBytes = count * itemSize`; giá trị lớn overflow thành số nhỏ và bypass limit.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Bypass limit, sai tiền/số lượng, exception/DoS.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Boundary tests MaxValue; analyzers.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>checked { var total = count * itemSize; }
+// hoặc dùng long/decimal đúng domain</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> `checked`, proper numeric type, upper/lower bounds trước phép toán.</div>
+</article>
+
+</section>
+<section id="sec-api" class="section"><h2>J. API Security</h2>
+
+<article id="v-missing-rate-limiting" class="vuln">
+<h3>Missing Rate Limiting</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-799</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Endpoint login/search/export/expensive API không giới hạn tần suất.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Một client gọi hàng nghìn request/s làm CPU/DB hoặc provider cạn quota.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>DoS, brute force/password spraying, chi phí cloud tăng.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>RPS per principal/IP, 429 metrics, saturation dashboard.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>builder.Services.AddRateLimiter(...); // policy theo IP/user/API key + downstream capacity</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> ASP.NET rate limiter/APIM/App Gateway; per-user/IP/token buckets; quota; backpressure.</div>
+</article>
+
+
+<article id="v-excessive-data-exposure" class="vuln">
+<h3>Excessive Data Exposure</h3>
+<div class="meta"><span class="sev-medium">Medium</span> · CWE-213</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>API trả entity đầy đủ và kỳ vọng UI tự bỏ field không cần.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>`GET /users` serialize entity gồm Email, InternalNotes, PasswordHash.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Rò PII/secret/internal metadata; frontend bug/log có thể expose.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Inspect JSON contracts; snapshot tests; DLP.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>return Ok(users.Select(x =&gt; new UserDto(x.Id, x.DisplayName)));</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Response DTO/projection; data minimization; field-level auth khi cần.</div>
+</article>
+
+
+<article id="v-cors-misconfiguration" class="vuln">
+<h3>CORS Misconfiguration</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-942</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Cho origin quá rộng, đặc biệt credentials + untrusted origin.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>Policy reflect lại bất kỳ `Origin` rồi `AllowCredentials`.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Website attacker có thể đọc response bằng browser với credential nếu policy sai.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Inspect response `Access-Control-Allow-Origin/Credentials`; test origins.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>builder.Services.AddCors(o =&gt; o.AddPolicy(&quot;spa&quot;, p =&gt; p.WithOrigins(&quot;https://app.company.com&quot;).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Exact origin allow-list; không dùng wildcard với credentials; CORS không thay thế authorization.</div>
+</article>
+
+
+<article id="v-csrf-cross-site-request-forgery" class="vuln">
+<h3>CSRF (Cross-Site Request Forgery)</h3>
+<div class="meta"><span class="sev-high">High</span> · CWE-352</div>
+<div class="mini-grid">
+<div class="card"><h3>Khi nào bị?</h3><p>Browser tự gửi cookie auth cho cross-site request và server không có anti-CSRF defense.</p></div>
+<div class="card"><h3>Ví dụ thực tế</h3><p>App MVC cookie-auth có POST `/transfer` không antiforgery; attacker lừa browser user submit form.</p></div>
+<div class="card"><h3>Mức độ nguy hiểm</h3><p>Thực hiện action dưới identity nạn nhân. Bearer token trong Authorization header ít bị CSRF hơn nếu token không tự attach cross-site.</p></div>
+<div class="card"><h3>Cách kiểm tra</h3><p>Review state-changing cookie-auth endpoints; SameSite behavior.</p></div>
+</div>
+<details open><summary>Code minh họa: vì sao lỗi và hướng sửa</summary><div><pre><code>[ValidateAntiForgeryToken]
+[HttpPost]
+public IActionResult Update(...) { ... }</code></pre></div></details>
+<div class="prod"><b>Phòng tránh / production:</b> Antiforgery token; SameSite cookies; Origin/Referer checks defense-in-depth; không dùng GET cho state change.</div>
+</article>
+
+</section>
+
+<section id="security-ta-checklist" class="section">
+<h2>17. Security checklist thực tế cho .NET/Azure Technical Advisor</h2>
+<table>
+<tr><th>Area</th><th>Review bắt buộc</th><th>Azure/.NET mapping</th></tr>
+<tr><td>Authentication</td><td>Issuer/audience/signature/lifetime, MFA/Entra ID, service-to-service identity</td><td>Microsoft.Identity.Web, Managed Identity, Workload Identity</td></tr>
+<tr><td>Authorization</td><td>Endpoint policy + resource/tenant ownership</td><td>Policy-based auth, claims, DB query scoped TenantId</td></tr>
+<tr><td>Secrets</td><td>Không hardcode; secret không xuống SPA</td><td>Key Vault, Managed Identity, federated credentials</td></tr>
+<tr><td>Input → Interpreter</td><td>SQL, shell, LDAP, XPath, Dynamic LINQ, template, script</td><td>Typed DTO + parameterization + allow-list</td></tr>
+<tr><td>Outbound HTTP</td><td>Timeout, certificate validation, SSRF allow-list</td><td>IHttpClientFactory, egress firewall/NSG/network policy</td></tr>
+<tr><td>Files</td><td>Type/size/name/path, malware, archive extraction</td><td>Blob private container, SAS scoped/short-lived, isolated worker</td></tr>
+<tr><td>Logs</td><td>No token/password/PII; traceId thay cho stack trace external</td><td>Application Insights/OpenTelemetry + redaction</td></tr>
+<tr><td>API abuse</td><td>Rate limit, body limit, pagination, query complexity</td><td>ASP.NET RateLimiter, APIM/App Gateway, KEDA/HPA</td></tr>
+<tr><td>Dependencies</td><td>SCA/CVE + dangerous APIs/config</td><td>Snyk, GitHub/ADO dependency scanning, Sonar/SAST</td></tr>
+</table>
+<div class="flow">PR security gate:
+1. Authentication/Authorization change?
+2. New input reaches SQL/shell/template/parser?
+3. New outbound URL or uploaded file processing?
+4. New secret/config?
+5. New sensitive field in log/response?
+6. New package/CVE?
+7. Negative security tests included?
+8. Rate/size/time limits defined?</div>
+<div class="decision"><b>Ưu tiên review:</b> Critical: RCE/auth bypass/secret exposure/file write/SSRF metadata → High: tenant data, XSS, crypto, CORS/CSRF → Medium: verbose errors/log forging/business edge cases. Severity thực tế có thể tăng nếu endpoint public hoặc chạy với quyền rộng.</div>
+</section>
+
+<section id="checklist" class="section">
+  <h2>Checklist Technical Advisor khi gặp issue production</h2>
+  <table>
+    <tr><th>Layer</th><th>Check nhanh</th><th>Tool gợi ý</th></tr>
+    <tr><td>Client / LB</td><td>Status, TLS, routing, timeout</td><td>curl, openssl, App Gateway/F5 logs</td></tr>
+    <tr><td>API</td><td>p95/p99, RPS, 5xx, thread pool</td><td>App Insights, dotnet-counters</td></tr>
+    <tr><td>Dependency</td><td>HTTP/SQL/Redis latency</td><td>Distributed tracing</td></tr>
+    <tr><td>SQL</td><td>Top queries, waits, locks, plan</td><td>Query Store, Extended Events</td></tr>
+    <tr><td>Cache</td><td>Hit ratio, latency, evictions</td><td>Azure Cache metrics</td></tr>
+    <tr><td>Messaging</td><td>Backlog, retry, DLQ, duplicate</td><td>Service Bus metrics</td></tr>
+    <tr><td>Container</td><td>CPU/RAM, restart, throttling</td><td>AKS/ACA metrics, kubectl logs</td></tr>
+  </table>
+
+  <h3>Thứ tự ưu tiên khi phải xử lý nhanh</h3>
+  <div class="flow">1. Xác nhận blast radius
+2. Xác định change gần nhất
+3. Đo endpoint + dependency latency
+4. Bảo vệ hệ thống: rate limit / circuit breaker / rollback nếu cần
+5. Sửa root cause
+6. Load test / canary
+7. Theo dõi sau deploy
+8. Postmortem + action item có owner</div>
+
+  <div class="decision"><b>Nguyên tắc áp dụng chung:</b> Reliability trước → Correctness → Performance → Cost. Không tối ưu vài trăm ms nếu hệ thống vẫn có duplicate processing, data corruption hoặc retry storm.</div>
+</section>
+
+<footer>
+  Tài liệu tổng hợp từ 5 hình “.NET Interview Question Bank” do người dùng cung cấp và repository “The Most Vulnerable .NET App” (AlexGoOn). Phần security bám theo 53 mục/CWE/severity trong source repository, sau đó mở rộng theo ASP.NET Core, Azure, SQL Server, Redis, messaging, file processing và container workloads.
+</footer>
+</main>
+</div>
+</body>
+</html>

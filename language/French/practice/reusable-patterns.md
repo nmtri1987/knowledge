@@ -1,0 +1,13 @@
+# Modèles réutilisables
+
+- `Je voudrais [plat/boisson].` — Tôi muốn...
+- `Je préfère [option].` — Tôi thích phương án... hơn.
+- `Il y a [un problème/un risque].` — Có...
+- `Je vais [vérifier/confirmer/tester].` — Tôi sẽ...
+- `Vous pouvez [répéter/confirmer] ?` — Ông/bà có thể...?
+- `C’est [simple/bon/important].` — Điều đó...
+- `On peut continuer en anglais ?` — Ta có thể tiếp tục bằng English không?
+
+## Nhịp nói
+
+`Je vais vérifier / et je vous confirme / cet après-midi.`

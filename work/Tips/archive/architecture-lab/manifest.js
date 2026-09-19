@@ -1,0 +1,1 @@
+window.TIP_ARCHIVE_META=window.TIP_ARCHIVE_META||{};window.TIP_ARCHIVE_META["architecture-lab"]={"id":"architecture-lab","source":"The Architecture Lab","category":".NET & Architecture","total":30,"chunks":1,"chunkSize":120,"updatedAt":"2026-09-14T11:05:42+00:00"};

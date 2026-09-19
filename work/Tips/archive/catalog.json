@@ -1,0 +1,58 @@
+{
+  "archives": [
+    {
+      "id": "architecture-lab",
+      "source": "The Architecture Lab",
+      "category": ".NET & Architecture",
+      "total": 30,
+      "chunks": 1,
+      "chunkSize": 120,
+      "updatedAt": "2026-09-14T11:05:42+00:00"
+    },
+    {
+      "id": "microsoft-dotnet",
+      "source": "Microsoft .NET Blog",
+      "category": ".NET",
+      "total": 3130,
+      "chunks": 27,
+      "chunkSize": 120,
+      "updatedAt": "2026-09-14T11:05:50+00:00"
+    },
+    {
+      "id": "microsoft-azure-sdk",
+      "source": "Microsoft Azure SDK Blog",
+      "category": "Azure & SDK",
+      "total": 307,
+      "chunks": 3,
+      "chunkSize": 120,
+      "updatedAt": "2026-09-14T11:05:52+00:00"
+    },
+    {
+      "id": "kubernetes-blog",
+      "source": "Kubernetes Blog",
+      "category": "Kubernetes",
+      "total": 765,
+      "chunks": 7,
+      "chunkSize": 120,
+      "updatedAt": "2026-09-14T11:05:54+00:00"
+    },
+    {
+      "id": "anthropic-engineering",
+      "source": "Anthropic Engineering & Research",
+      "category": "AI Engineering",
+      "total": 186,
+      "chunks": 2,
+      "chunkSize": 120,
+      "updatedAt": "2026-09-14T11:05:54+00:00"
+    },
+    {
+      "id": "nashtech-blog",
+      "source": "NashTech Blog",
+      "category": "Engineering & Advisory",
+      "total": 5845,
+      "chunks": 49,
+      "chunkSize": 120,
+      "updatedAt": "2026-09-14T12:01:22+00:00"
+    }
+  ]
+}

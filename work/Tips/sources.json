@@ -1,0 +1,62 @@
+{
+  "max_items_per_source": 0,
+  "sources": [
+    {
+      "id": "architecture-lab",
+      "name": "The Architecture Lab",
+      "type": "rss",
+      "url": "https://thearchitecturelab.com/rss.xml",
+      "category": ".NET & Architecture",
+      "enabled": true
+    },
+    {
+      "id": "microsoft-dotnet",
+      "name": "Microsoft .NET Blog",
+      "type": "rss",
+      "url": "https://devblogs.microsoft.com/dotnet/feed/",
+      "category": ".NET",
+      "enabled": true
+    },
+    {
+      "id": "microsoft-azure-sdk",
+      "name": "Microsoft Azure SDK Blog",
+      "type": "rss",
+      "url": "https://devblogs.microsoft.com/azure-sdk/feed/",
+      "category": "Azure & SDK",
+      "enabled": true
+    },
+    {
+      "id": "kubernetes-blog",
+      "name": "Kubernetes Blog",
+      "type": "rss",
+      "url": "https://kubernetes.io/feed.xml",
+      "category": "Kubernetes",
+      "enabled": true
+    },
+    {
+      "id": "anthropic-engineering",
+      "name": "Anthropic Engineering",
+      "type": "html-links",
+      "url": "https://www.anthropic.com/engineering",
+      "category": "AI Engineering",
+      "enabled": true,
+      "path_contains": ["/engineering/", "/research/"]
+    },
+    {
+      "id": "nashtech-blog",
+      "name": "NashTech Blog",
+      "type": "rss",
+      "url": "https://blog.nashtechglobal.com/feed/",
+      "category": "Engineering & Advisory",
+      "enabled": true
+    },
+    {
+      "id": "linkedin-manual",
+      "name": "LinkedIn saved posts",
+      "type": "manual",
+      "category": "Community",
+      "enabled": false,
+      "note": "LinkedIn does not provide a stable public RSS feed for a personal timeline. Add approved newsletter RSS/email links or paste selected public URLs into manual-items.json. Avoid scraping an authenticated feed."
+    }
+  ]
+}

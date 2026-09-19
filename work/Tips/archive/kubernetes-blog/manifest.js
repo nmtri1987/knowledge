@@ -1,0 +1,1 @@
+window.TIP_ARCHIVE_META=window.TIP_ARCHIVE_META||{};window.TIP_ARCHIVE_META["kubernetes-blog"]={"id":"kubernetes-blog","source":"Kubernetes Blog","category":"Kubernetes","total":765,"chunks":7,"chunkSize":120,"updatedAt":"2026-09-14T11:05:54+00:00"};

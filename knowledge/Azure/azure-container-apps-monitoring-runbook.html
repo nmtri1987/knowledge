@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azure Container Apps - PowerShell Monitoring and Troubleshooting Runbook</title>
+<style>
+:root{--bg:#f5f7fa;--paper:#fff;--ink:#172033;--muted:#526078;--line:#d9e0ea;--accent:#0067b8;--code:#101827;--codeink:#e8eef8;--warn:#fff7db}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",Arial,sans-serif}.layout{display:grid;grid-template-columns:300px minmax(0,960px);gap:28px;max-width:1320px;margin:auto;padding:24px}.toc{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px}.toc h2{margin:0 0 10px;font-size:18px}.toc ul{list-style:none;padding:0;margin:0}.toc li{margin:4px 0}.toc li.l3{padding-left:14px;font-size:13px}.toc a{color:#33445f;text-decoration:none}.toc a:hover{color:var(--accent);text-decoration:underline}main{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:42px 48px;box-shadow:0 8px 24px rgba(25,40,65,.06)}h1{font-size:32px;line-height:1.2;margin-top:0}h2{font-size:24px;margin-top:44px;padding-bottom:8px;border-bottom:2px solid #e7edf5}h3{font-size:19px;margin-top:30px}h4{font-size:16px}a{color:var(--accent)}p,li{max-width:85ch}table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:14px}th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}th{background:#edf4fb}tr:nth-child(even) td{background:#fafbfd}pre{overflow:auto;background:var(--code);color:var(--codeink);padding:16px 18px;border-radius:8px;border:1px solid #26344a;font:13px/1.55 Consolas,"Cascadia Code",monospace}code{font-family:Consolas,"Cascadia Code",monospace;background:#edf1f6;padding:.12em .32em;border-radius:4px}pre code{background:transparent;padding:0}blockquote{margin:18px 0;padding:10px 18px;background:var(--warn);border-left:4px solid #e0a100}.meta{color:var(--muted);font-size:13px}.print-note{display:none}@media(max-width:900px){.layout{display:block;padding:10px}.toc{position:relative;max-height:none;margin-bottom:14px}main{padding:24px 20px}}@media print{body{background:#fff}.layout{display:block;padding:0}.toc{display:none}main{border:0;box-shadow:none;padding:0}.print-note{display:block}pre{white-space:pre-wrap;word-break:break-word}h2,h3{break-after:avoid}table,pre{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Table of contents">
+<h2>Contents</h2>
+<ul>
+<li><a href="#purpose">Purpose</a></li>
+<li><a href="#safety-conventions">Safety conventions</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#standard-input-variables">Standard input variables</a></li>
+<li><a href="#1-authenticate-and-confirm-context">1. Authenticate and confirm context</a></li>
+<li class="toc-sub"><a href="#login-with-a-personal-account-read-only-until-a-modifying-command-is-used">Login with a personal account — READ-ONLY until a modifying command is used</a></li>
+<li><a href="#2-inventory-container-apps">2. Inventory Container Apps</a></li>
+<li class="toc-sub"><a href="#list-all-container-apps-in-a-resource-group-read-only">List all Container Apps in a resource group — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#list-container-apps-across-the-current-subscription-read-only">List Container Apps across the current subscription — READ-ONLY</a></li>
+<li><a href="#3-capture-a-container-app-snapshot">3. Capture a Container App snapshot</a></li>
+<li class="toc-sub"><a href="#high-level-snapshot-read-only">High-level snapshot — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#query-arm-directly-when-the-container-apps-extension-returns-unexpected-nulls-read-only">Query ARM directly when the Container Apps extension returns unexpected nulls — READ-ONLY</a></li>
+<li><a href="#4-container-apps-environment">4. Container Apps Environment</a></li>
+<li class="toc-sub"><a href="#environment-state-read-only">Environment state — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#apps-using-an-environment-read-only">Apps using an environment — READ-ONLY</a></li>
+<li><a href="#5-managed-identity-and-rbac">5. Managed Identity and RBAC</a></li>
+<li class="toc-sub"><a href="#identity-attached-to-aca-read-only">Identity attached to ACA — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#resolve-identity-metadata-read-only">Resolve identity metadata — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#list-effective-role-assignments-read-only">List effective role assignments — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#common-identity-split">Common identity split</a></li>
+<li><a href="#6-container-registry-and-deployed-image">6. Container registry and deployed image</a></li>
+<li class="toc-sub"><a href="#registry-configuration-read-only">Registry configuration — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#current-image-read-only">Current image — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#acr-repositories-and-tags-read-only">ACR repositories and tags — READ-ONLY</a></li>
+<li><a href="#7-key-vault-references-and-environment-variables">7. Key Vault references and environment variables</a></li>
+<li class="toc-sub"><a href="#inspect-secret-metadata-safely-read-only">Inspect secret metadata safely — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#inspect-environment-mappings-safely-read-only">Inspect environment mappings safely — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#generic-key-vault-reference-update-changes-azure">Generic Key Vault reference update — CHANGES AZURE</a></li>
+<li><a href="#8-revisions-and-replicas">8. Revisions and replicas</a></li>
+<li class="toc-sub"><a href="#list-revisions-read-only">List revisions — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#list-replicas-for-a-revision-read-only">List replicas for a revision — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#restart-a-revision-changes-azure">Restart a revision — CHANGES AZURE</a></li>
+<li class="toc-sub"><a href="#activate-an-older-revision-for-rollback-changes-azure">Activate an older revision for rollback — CHANGES AZURE</a></li>
+<li><a href="#9-console-and-system-logs">9. Console and system logs</a></li>
+<li class="toc-sub"><a href="#recent-application-logs-read-only">Recent application logs — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#follow-application-logs-read-only">Follow application logs — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#system-logs-read-only">System logs — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#corporate-proxy-certificate-errors">Corporate proxy certificate errors</a></li>
+<li><a href="#10-ingress-and-health-endpoint">10. Ingress and health endpoint</a></li>
+<li class="toc-sub"><a href="#inspect-ingress-read-only">Inspect ingress — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#test-a-public-health-endpoint-read-only">Test a public health endpoint — READ-ONLY</a></li>
+<li><a href="#11-scale-configuration">11. Scale configuration</a></li>
+<li class="toc-sub"><a href="#inspect-min-max-replicas-and-rules-read-only">Inspect min/max replicas and rules — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#update-replica-limits-changes-azure">Update replica limits — CHANGES AZURE</a></li>
+<li><a href="#12-azure-monitor-metrics">12. Azure Monitor metrics</a></li>
+<li class="toc-sub"><a href="#list-available-metric-definitions-read-only">List available metric definitions — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#query-a-discovered-metric-read-only">Query a discovered metric — READ-ONLY</a></li>
+<li><a href="#13-log-analytics-queries">13. Log Analytics queries</a></li>
+<li class="toc-sub"><a href="#resolve-workspace-id-read-only">Resolve workspace ID — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#recent-console-errors-read-only">Recent console errors — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#recent-system-events-read-only">Recent system events — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#detect-repeated-container-termination-read-only">Detect repeated container termination — READ-ONLY</a></li>
+<li><a href="#14-activity-log-and-recent-changes">14. Activity Log and recent changes</a></li>
+<li class="toc-sub"><a href="#recent-resource-group-activity-read-only">Recent resource-group activity — READ-ONLY</a></li>
+<li class="toc-sub"><a href="#resource-state-read-only">Resource state — READ-ONLY</a></li>
+<li><a href="#15-external-dependency-and-endpoint-validation">15. External dependency and endpoint validation</a></li>
+<li class="toc-sub"><a href="#mistral-workflows-deployment-and-worker-status">Mistral Workflows deployment and worker status</a></li>
+<li><a href="#16-reusable-powershell-snapshot">16. Reusable PowerShell snapshot</a></li>
+<li><a href="#17-common-failures-and-interpretation">17. Common failures and interpretation</a></li>
+<li><a href="#18-monitoring-cadence">18. Monitoring cadence</a></li>
+<li class="toc-sub"><a href="#after-every-deployment">After every deployment</a></li>
+<li class="toc-sub"><a href="#daily-operational-checks">Daily operational checks</a></li>
+<li class="toc-sub"><a href="#incident-checklist">Incident checklist</a></li>
+<li><a href="#19-production-recommendations">19. Production recommendations</a></li>
+<li><a href="#quick-command-index">Quick command index</a></li>
+</ul>
+</nav>
+<main class="content">
+<h1>Azure Container Apps — PowerShell Monitoring and Troubleshooting Runbook</h1>
+<p>Version: 1.1<br>Last updated: 2026-08-28<br>Audience: application teams, DevOps engineers, cloud support, technical advisors</p>
+<h2 id="purpose">Purpose</h2>
+<p>This runbook provides reusable PowerShell and Azure CLI commands for monitoring and troubleshooting any Azure Container App (ACA). It is intentionally resource-agnostic and uses placeholders instead of project-specific names.</p>
+<p>It covers:</p>
+<ul>
+<li>subscription and resource discovery;</li>
+<li>Container App, environment, revision, replica, image, identity and registry state;</li>
+<li>Key Vault references without displaying secret values;</li>
+<li>application and system logs;</li>
+<li>ingress, health, scaling, metrics and Log Analytics;</li>
+<li>RBAC and common deployment failures;</li>
+<li>safe remediation, revision restart and rollback commands;</li>
+<li>sample input and sanitized sample output.</li>
+</ul>
+<h2 id="safety-conventions">Safety conventions</h2>
+<p>Commands marked <strong>READ-ONLY</strong> do not modify Azure resources. Commands marked <strong>CHANGES AZURE</strong> create a revision or update resource configuration.</p>
+<p>Never:</p>
+<ul>
+<li>print Key Vault secret values to console or pipeline logs;</li>
+<li>place credentials directly in scripts, YAML, release definitions or command history;</li>
+<li>use a personal account as a permanent pipeline identity;</li>
+<li>assume <code>provisioningState=Succeeded</code> means the application process is healthy;</li>
+<li>use mutable image tags such as <code>latest</code> as the only production deployment identifier.</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Install and verify:</p>
+<pre><code class="language-powershell">az version
+az extension show --name containerapp --output table
+$PSVersionTable.PSVersion
+</code></pre>
+<p>Recommended minimum access for monitoring:</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>Role or action</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Subscription or resource group</td>
+<td>Reader</td>
+<td>Discover and inspect resources</td>
+</tr>
+<tr>
+<td>Container App</td>
+<td>Container Apps Contributor</td>
+<td>Only when updates are required</td>
+</tr>
+<tr>
+<td>User-assigned identity</td>
+<td>Managed Identity Operator</td>
+<td>Required when a deployment links an identity</td>
+</tr>
+<tr>
+<td>ACR</td>
+<td>AcrPull for runtime; appropriate build role for pipeline</td>
+<td>Pull or build images</td>
+</tr>
+<tr>
+<td>Key Vault</td>
+<td>Key Vault Secrets User for runtime</td>
+<td>Resolve secret values</td>
+</tr>
+</tbody></table>
+<p><code>Contributor</code> does not grant Key Vault data-plane secret access and cannot create RBAC role assignments.</p>
+<h2 id="standard-input-variables">Standard input variables</h2>
+<p>Set these once at the beginning of a troubleshooting session:</p>
+<pre><code class="language-powershell">$Subscription    = &quot;&lt;subscription-name-or-id&gt;&quot;
+$ResourceGroup   = &quot;&lt;resource-group&gt;&quot;
+$AppName         = &quot;&lt;container-app-name&gt;&quot;
+$EnvironmentName = &quot;&lt;container-app-environment-name&gt;&quot;
+$AcrName         = &quot;&lt;acr-name&gt;&quot;
+$KeyVaultName    = &quot;&lt;key-vault-name&gt;&quot;
+$IdentityName    = &quot;&lt;user-assigned-identity-name&gt;&quot;
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-powershell">$Subscription    = &quot;subs-app-sandbox&quot;
+$ResourceGroup   = &quot;rg-weu-app-sandbox&quot;
+$AppName         = &quot;orders-worker&quot;
+$EnvironmentName = &quot;orders-aca-env&quot;
+$AcrName         = &quot;acrorderssb&quot;
+$KeyVaultName    = &quot;kv-orders-sb&quot;
+$IdentityName    = &quot;orders-worker-identity&quot;
+</code></pre>
+<h2 id="1-authenticate-and-confirm-context">1. Authenticate and confirm context</h2>
+<h3 id="login-with-a-personal-account-read-only-until-a-modifying-command-is-used">Login with a personal account — READ-ONLY until a modifying command is used</h3>
+<pre><code class="language-powershell">az login
+az account set --subscription $Subscription
+az account show `
+  --query &quot;{subscription:name,id:id,tenantId:tenantId,principal:user.name,type:user.type}&quot; `
+  --output table
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-text">Subscription       Id                                    TenantId                              Principal              Type
+-----------------  ------------------------------------  ------------------------------------  ---------------------  ----
+subs-app-sandbox   00000000-0000-0000-0000-000000000000  11111111-1111-1111-1111-111111111111  user@company.com       user
+</code></pre>
+<p>In Azure DevOps <code>AzureCLI@2</code>, authentication is performed by the selected Service Connection. The local <code>az login</code> session is not used.</p>
+<h2 id="2-inventory-container-apps">2. Inventory Container Apps</h2>
+<h3 id="list-all-container-apps-in-a-resource-group-read-only">List all Container Apps in a resource group — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp list `
+  --resource-group $ResourceGroup `
+  --query &quot;[].{name:name,state:properties.provisioningState,environment:properties.environmentId,revision:properties.latestRevisionName,fqdn:properties.configuration.ingress.fqdn}&quot; `
+  --output table
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-text">Name            State      Revision                    Fqdn
+--------------  ---------  --------------------------  ---------------------------------------------
+orders-api      Succeeded  orders-api--0000012         orders-api.example.azurecontainerapps.io
+orders-worker   Succeeded  orders-worker--0000008
+</code></pre>
+<h3 id="list-container-apps-across-the-current-subscription-read-only">List Container Apps across the current subscription — READ-ONLY</h3>
+<pre><code class="language-powershell">az resource list `
+  --resource-type Microsoft.App/containerApps `
+  --query &quot;[].{name:name,resourceGroup:resourceGroup,location:location,id:id}&quot; `
+  --output table
+</code></pre>
+<h2 id="3-capture-a-container-app-snapshot">3. Capture a Container App snapshot</h2>
+<h3 id="high-level-snapshot-read-only">High-level snapshot — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;{
+    state:properties.provisioningState,
+    environment:properties.environmentId,
+    latestRevision:properties.latestRevisionName,
+    activeRevisionsMode:properties.configuration.activeRevisionsMode,
+    image:properties.template.containers[0].image,
+    minReplicas:properties.template.scale.minReplicas,
+    maxReplicas:properties.template.scale.maxReplicas,
+    fqdn:properties.configuration.ingress.fqdn
+  }&quot; `
+  --output jsonc
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-json">{
+  &quot;activeRevisionsMode&quot;: &quot;Single&quot;,
+  &quot;fqdn&quot;: null,
+  &quot;image&quot;: &quot;acrsample.azurecr.io/orders-worker:10452&quot;,
+  &quot;latestRevision&quot;: &quot;orders-worker--0000008&quot;,
+  &quot;maxReplicas&quot;: 5,
+  &quot;minReplicas&quot;: 1,
+  &quot;state&quot;: &quot;Succeeded&quot;
+}
+</code></pre>
+<p>Interpretation:</p>
+<ul>
+<li><code>Succeeded</code> means the ARM operation succeeded; inspect revision and replica health separately.</li>
+<li><code>fqdn=null</code> is normal for a background worker without ingress.</li>
+<li>an immutable image tag such as a build ID is preferred over <code>latest</code>.</li>
+</ul>
+<h3 id="query-arm-directly-when-the-container-apps-extension-returns-unexpected-nulls-read-only">Query ARM directly when the Container Apps extension returns unexpected nulls — READ-ONLY</h3>
+<pre><code class="language-powershell">$AppId = az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query id `
+  --output tsv
+
+az resource show `
+  --ids $AppId `
+  --api-version &quot;2024-03-01&quot; `
+  --query &quot;{identity:identity,configuration:properties.configuration,template:properties.template}&quot; `
+  --output jsonc
+</code></pre>
+<p>Use this when CLI extension serialization appears inconsistent with Portal or ARM.</p>
+<h2 id="4-container-apps-environment">4. Container Apps Environment</h2>
+<h3 id="environment-state-read-only">Environment state — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp env show `
+  --name $EnvironmentName `
+  --resource-group $ResourceGroup `
+  --query &quot;{state:properties.provisioningState,location:location,staticIp:properties.staticIp,workspace:properties.appLogsConfiguration.logAnalyticsConfiguration.customerId}&quot; `
+  --output jsonc
+</code></pre>
+<h3 id="apps-using-an-environment-read-only">Apps using an environment — READ-ONLY</h3>
+<pre><code class="language-powershell">$EnvironmentId = az containerapp env show `
+  --name $EnvironmentName `
+  --resource-group $ResourceGroup `
+  --query id `
+  --output tsv
+
+az containerapp list `
+  --resource-group $ResourceGroup `
+  --query &quot;[?properties.environmentId==&#39;$EnvironmentId&#39;].{name:name,state:properties.provisioningState}&quot; `
+  --output table
+</code></pre>
+<p><code>ManagedClusterSuspended</code> can occur when an environment has no runnable applications. Confirm app revisions and replicas before changing the environment.</p>
+<h2 id="5-managed-identity-and-rbac">5. Managed Identity and RBAC</h2>
+<h3 id="identity-attached-to-aca-read-only">Identity attached to ACA — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query identity `
+  --output jsonc
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;UserAssigned&quot;,
+  &quot;userAssignedIdentities&quot;: {
+    &quot;/subscriptions/.../userAssignedIdentities/orders-worker-identity&quot;: {
+      &quot;clientId&quot;: &quot;22222222-2222-2222-2222-222222222222&quot;,
+      &quot;principalId&quot;: &quot;33333333-3333-3333-3333-333333333333&quot;
+    }
+  }
+}
+</code></pre>
+<h3 id="resolve-identity-metadata-read-only">Resolve identity metadata — READ-ONLY</h3>
+<pre><code class="language-powershell">az identity show `
+  --name $IdentityName `
+  --resource-group $ResourceGroup `
+  --query &quot;{id:id,clientId:clientId,principalId:principalId}&quot; `
+  --output jsonc
+</code></pre>
+<h3 id="list-effective-role-assignments-read-only">List effective role assignments — READ-ONLY</h3>
+<pre><code class="language-powershell">$PrincipalId = az identity show `
+  --name $IdentityName `
+  --resource-group $ResourceGroup `
+  --query principalId `
+  --output tsv
+
+az role assignment list `
+  --assignee-object-id $PrincipalId `
+  --include-inherited `
+  --all `
+  --query &quot;[].{role:roleDefinitionName,scope:scope}&quot; `
+  --output table
+</code></pre>
+<h3 id="common-identity-split">Common identity split</h3>
+<table>
+<thead>
+<tr>
+<th>Identity</th>
+<th>Recommended responsibility</th>
+<th>Typical roles</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pipeline identity</td>
+<td>Build and update ACA</td>
+<td>Container Apps Contributor; ACR build role; Managed Identity Operator on the runtime identity</td>
+</tr>
+<tr>
+<td>Runtime identity</td>
+<td>Pull image and read runtime secrets</td>
+<td>AcrPull; Key Vault Secrets User</td>
+</tr>
+<tr>
+<td>Personal account</td>
+<td>Temporary diagnostics/bootstrap</td>
+<td>Reader or time-bound Contributor through PIM</td>
+</tr>
+</tbody></table>
+<p>Avoid using the runtime identity as the pipeline deployment identity.</p>
+<h2 id="6-container-registry-and-deployed-image">6. Container registry and deployed image</h2>
+<h3 id="registry-configuration-read-only">Registry configuration — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;properties.configuration.registries&quot; `
+  --output jsonc
+</code></pre>
+<p>Expected identity-based configuration:</p>
+<pre><code class="language-json">[
+  {
+    &quot;server&quot;: &quot;acrsample.azurecr.io&quot;,
+    &quot;identity&quot;: &quot;/subscriptions/.../userAssignedIdentities/orders-worker-identity&quot;,
+    &quot;username&quot;: &quot;&quot;,
+    &quot;passwordSecretRef&quot;: &quot;&quot;
+  }
+]
+</code></pre>
+<h3 id="current-image-read-only">Current image — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;properties.template.containers[].{container:name,image:image,cpu:resources.cpu,memory:resources.memory}&quot; `
+  --output table
+</code></pre>
+<h3 id="acr-repositories-and-tags-read-only">ACR repositories and tags — READ-ONLY</h3>
+<pre><code class="language-powershell">az acr repository list `
+  --name $AcrName `
+  --output table
+
+$Repository = &quot;&lt;repository-name&gt;&quot;
+
+az acr repository show-tags `
+  --name $AcrName `
+  --repository $Repository `
+  --orderby time_desc `
+  --detail `
+  --output table
+</code></pre>
+<p>An ACR repository is related to ACA through the full image reference:</p>
+<pre><code class="language-text">&lt;registry&gt;.azurecr.io/&lt;repository&gt;:&lt;tag&gt;
+</code></pre>
+<h2 id="7-key-vault-references-and-environment-variables">7. Key Vault references and environment variables</h2>
+<h3 id="inspect-secret-metadata-safely-read-only">Inspect secret metadata safely — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;properties.configuration.secrets[].{name:name,keyVaultUrl:keyVaultUrl,identity:identity}&quot; `
+  --output table
+</code></pre>
+<p>This displays references, not secret values.</p>
+<p>Interpretation:</p>
+<ul>
+<li><code>secrets=null</code>: no ACA secrets are configured.</li>
+<li>a Key Vault value existing does not automatically create an ACA secret reference.</li>
+<li>the reference requires <code>keyVaultUrl</code> and an identity with secret <code>get</code> permission.</li>
+</ul>
+<h3 id="inspect-environment-mappings-safely-read-only">Inspect environment mappings safely — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;properties.template.containers[].env[].{name:name,secretRef:secretRef,value:value}&quot; `
+  --output table
+</code></pre>
+<p>For sensitive settings, expect <code>secretRef</code> and no plaintext <code>value</code>.</p>
+<h3 id="generic-key-vault-reference-update-changes-azure">Generic Key Vault reference update — CHANGES AZURE</h3>
+<p>Inputs:</p>
+<pre><code class="language-powershell">$SecretName = &quot;&lt;aca-secret-name&gt;&quot;
+$EnvironmentVariableName = &quot;&lt;ENVIRONMENT_VARIABLE_NAME&gt;&quot;
+$IdentityId = az identity show `
+  --name $IdentityName `
+  --resource-group $ResourceGroup `
+  --query id `
+  --output tsv
+$SecretUri = &quot;https://$KeyVaultName.vault.azure.net/secrets/$SecretName&quot;
+</code></pre>
+<p>Update:</p>
+<pre><code class="language-powershell">az containerapp secret set `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --secrets &quot;$SecretName=keyvaultref:$SecretUri,identityref:$IdentityId&quot; `
+  --output none
+
+az containerapp update `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --set-env-vars &quot;$EnvironmentVariableName=secretref:$SecretName&quot; `
+  --output none
+</code></pre>
+<p>The caller needs ACA write permission and <code>userAssignedIdentities/assign/action</code> on the linked identity. The runtime identity, not necessarily the caller, needs Key Vault secret read access.</p>
+<h2 id="8-revisions-and-replicas">8. Revisions and replicas</h2>
+<h3 id="list-revisions-read-only">List revisions — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp revision list `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;[].{name:name,active:properties.active,health:properties.healthState,replicas:properties.replicas,created:properties.createdTime,image:properties.template.containers[0].image}&quot; `
+  --output table
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-text">Name                       Active  Health    Replicas  Image
+-------------------------  ------  --------  --------  ------------------------------------------
+orders-worker--0000008     True    Healthy   1         acrsample.azurecr.io/orders-worker:10452
+orders-worker--0000007     False   Healthy   0         acrsample.azurecr.io/orders-worker:10391
+</code></pre>
+<h3 id="list-replicas-for-a-revision-read-only">List replicas for a revision — READ-ONLY</h3>
+<pre><code class="language-powershell">$RevisionName = az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query properties.latestRevisionName `
+  --output tsv
+
+az containerapp replica list `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --revision $RevisionName `
+  --output table
+</code></pre>
+<h3 id="restart-a-revision-changes-azure">Restart a revision — CHANGES AZURE</h3>
+<pre><code class="language-powershell">az containerapp revision restart `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --revision $RevisionName
+</code></pre>
+<p>Use restart after a Key Vault rotation when immediate secret refresh is required. Confirm impact for stateful or long-running workers.</p>
+<h3 id="activate-an-older-revision-for-rollback-changes-azure">Activate an older revision for rollback — CHANGES AZURE</h3>
+<pre><code class="language-powershell">$PreviousRevision = &quot;&lt;previous-revision-name&gt;&quot;
+
+az containerapp revision activate `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --revision $PreviousRevision
+</code></pre>
+<p>For single-revision mode, prefer redeploying the previous immutable image tag through the pipeline so history remains auditable.</p>
+<h2 id="9-console-and-system-logs">9. Console and system logs</h2>
+<h3 id="recent-application-logs-read-only">Recent application logs — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp logs show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --type console `
+  --tail 100
+</code></pre>
+<h3 id="follow-application-logs-read-only">Follow application logs — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp logs show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --type console `
+  --follow `
+  --tail 30
+</code></pre>
+<h3 id="system-logs-read-only">System logs — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp logs show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --type system `
+  --tail 100
+</code></pre>
+<p>Use application logs for exceptions and startup output. Use system logs for image pull, scheduling, scaling, revision and platform events.</p>
+<p>Do not pass <code>--output text</code>; current Container Apps log commands accept formats such as <code>json</code>, <code>jsonc</code>, <code>table</code>, <code>tsv</code>, <code>yaml</code>, <code>yamlc</code> or no explicit output option.</p>
+<h3 id="corporate-proxy-certificate-errors">Corporate proxy certificate errors</h3>
+<p>Symptom:</p>
+<pre><code class="language-text">SSLCertVerificationError: unable to get local issuer certificate
+</code></pre>
+<p>This can affect local Azure CLI log streaming while the ACA itself is healthy. Import the corporate root CA into the trusted bundle and configure <code>REQUESTS_CA_BUNDLE</code> according to company policy. Do not disable TLS verification globally.</p>
+<h2 id="10-ingress-and-health-endpoint">10. Ingress and health endpoint</h2>
+<h3 id="inspect-ingress-read-only">Inspect ingress — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;properties.configuration.ingress&quot; `
+  --output jsonc
+</code></pre>
+<p>Check:</p>
+<ul>
+<li><code>external</code>: whether public ingress is enabled;</li>
+<li><code>targetPort</code>: must match the listening port inside the container;</li>
+<li><code>transport</code>: HTTP, HTTP/2 or TCP behavior;</li>
+<li>traffic weights and revision labels.</li>
+</ul>
+<h3 id="test-a-public-health-endpoint-read-only">Test a public health endpoint — READ-ONLY</h3>
+<pre><code class="language-powershell">$Fqdn = az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query properties.configuration.ingress.fqdn `
+  --output tsv
+
+$HealthPath = &quot;/health&quot;
+$Response = Invoke-WebRequest `
+  -Uri &quot;https://$Fqdn$HealthPath&quot; `
+  -Method Get `
+  -TimeoutSec 15
+
+$Response.StatusCode
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-text">200
+</code></pre>
+<p>Background workers normally have no ingress. Monitor their process, replica, queue lag and work completion instead.</p>
+<h2 id="11-scale-configuration">11. Scale configuration</h2>
+<h3 id="inspect-min-max-replicas-and-rules-read-only">Inspect min/max replicas and rules — READ-ONLY</h3>
+<pre><code class="language-powershell">az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query &quot;properties.template.scale&quot; `
+  --output jsonc
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-json">{
+  &quot;minReplicas&quot;: 1,
+  &quot;maxReplicas&quot;: 5,
+  &quot;rules&quot;: [
+    {
+      &quot;name&quot;: &quot;queue-scale-rule&quot;
+    }
+  ]
+}
+</code></pre>
+<p><code>ScaledObjectCheckFailed: no triggers defined</code> means a scale object exists without a usable trigger. For an always-on worker with no event scaler, use an intentional <code>minReplicas</code> configuration and remove invalid empty rules.</p>
+<h3 id="update-replica-limits-changes-azure">Update replica limits — CHANGES AZURE</h3>
+<pre><code class="language-powershell">az containerapp update `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --min-replicas 1 `
+  --max-replicas 5
+</code></pre>
+<p>Evaluate cost, concurrency, downstream rate limits and duplicate processing before increasing replicas.</p>
+<h2 id="12-azure-monitor-metrics">12. Azure Monitor metrics</h2>
+<p>Metric names vary by resource type and API evolution. Discover available metrics before querying them.</p>
+<h3 id="list-available-metric-definitions-read-only">List available metric definitions — READ-ONLY</h3>
+<pre><code class="language-powershell">$AppId = az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query id `
+  --output tsv
+
+az monitor metrics list-definitions `
+  --resource $AppId `
+  --query &quot;[].{name:name.value,displayName:name.localizedValue,unit:unit,aggregation:primaryAggregationType}&quot; `
+  --output table
+</code></pre>
+<h3 id="query-a-discovered-metric-read-only">Query a discovered metric — READ-ONLY</h3>
+<pre><code class="language-powershell">$MetricName = &quot;&lt;metric-name-from-list-definitions&gt;&quot;
+$StartTime = (Get-Date).ToUniversalTime().AddHours(-1).ToString(&quot;o&quot;)
+$EndTime = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+az monitor metrics list `
+  --resource $AppId `
+  --metric $MetricName `
+  --start-time $StartTime `
+  --end-time $EndTime `
+  --interval PT5M `
+  --aggregation Average,Maximum `
+  --output jsonc
+</code></pre>
+<p>Monitor at least:</p>
+<ul>
+<li>replica count and restart behavior;</li>
+<li>CPU and memory utilization versus configured limits;</li>
+<li>requests, latency and failure rate for HTTP applications;</li>
+<li>event/queue backlog and processing age for workers;</li>
+<li>revision health and deployment failure events.</li>
+</ul>
+<h2 id="13-log-analytics-queries">13. Log Analytics queries</h2>
+<h3 id="resolve-workspace-id-read-only">Resolve workspace ID — READ-ONLY</h3>
+<pre><code class="language-powershell">$WorkspaceResourceId = az containerapp env show `
+  --name $EnvironmentName `
+  --resource-group $ResourceGroup `
+  --query properties.appLogsConfiguration.logAnalyticsConfiguration.customerId `
+  --output tsv
+</code></pre>
+<p>Depending on configuration, this value may be a Log Analytics customer/workspace ID rather than an ARM resource ID.</p>
+<h3 id="recent-console-errors-read-only">Recent console errors — READ-ONLY</h3>
+<pre><code class="language-kusto">ContainerAppConsoleLogs_CL
+| where TimeGenerated &gt; ago(1h)
+| where ContainerAppName_s == &quot;&lt;container-app-name&gt;&quot;
+| where Log_s has_any (&quot;ERROR&quot;, &quot;Exception&quot;, &quot;Traceback&quot;, &quot;Fatal&quot;)
+| project TimeGenerated, RevisionName_s, ContainerName_s, Log_s
+| order by TimeGenerated desc
+</code></pre>
+<h3 id="recent-system-events-read-only">Recent system events — READ-ONLY</h3>
+<pre><code class="language-kusto">ContainerAppSystemLogs_CL
+| where TimeGenerated &gt; ago(1h)
+| where ContainerAppName_s == &quot;&lt;container-app-name&gt;&quot;
+| project TimeGenerated, RevisionName_s, Reason_s, Log_s
+| order by TimeGenerated desc
+</code></pre>
+<h3 id="detect-repeated-container-termination-read-only">Detect repeated container termination — READ-ONLY</h3>
+<pre><code class="language-kusto">ContainerAppSystemLogs_CL
+| where TimeGenerated &gt; ago(24h)
+| where ContainerAppName_s == &quot;&lt;container-app-name&gt;&quot;
+| where Reason_s in (&quot;ContainerTerminated&quot;, &quot;ContainerCrashing&quot;)
+| summarize Terminations=count() by bin(TimeGenerated, 15m), RevisionName_s
+| order by TimeGenerated desc
+</code></pre>
+<p>Table and column names can vary with diagnostic settings. Use the Logs schema browser to confirm the actual names in the workspace.</p>
+<h2 id="14-activity-log-and-recent-changes">14. Activity Log and recent changes</h2>
+<h3 id="recent-resource-group-activity-read-only">Recent resource-group activity — READ-ONLY</h3>
+<pre><code class="language-powershell">az monitor activity-log list `
+  --resource-group $ResourceGroup `
+  --offset 24h `
+  --max-events 100 `
+  --query &quot;[].{time:eventTimestamp,status:status.value,operation:operationName.localizedValue,caller:caller,resource:resourceId,correlationId:correlationId}&quot; `
+  --output table
+</code></pre>
+<p>Use correlation IDs to connect a failed pipeline operation with Azure Activity Log entries.</p>
+<h3 id="resource-state-read-only">Resource state — READ-ONLY</h3>
+<pre><code class="language-powershell">az resource show `
+  --ids $AppId `
+  --api-version &quot;2024-03-01&quot; `
+  --output jsonc
+</code></pre>
+<h2 id="15-external-dependency-and-endpoint-validation">15. External dependency and endpoint validation</h2>
+<p>Use this pattern only when the current identity is authorized to read the secret. The value is held in memory and never printed.</p>
+<pre><code class="language-powershell">$SecretName = &quot;&lt;api-key-secret-name&gt;&quot;
+$Endpoint = &quot;https://api.example.com/health-or-whoami&quot;
+$ApiKey = $null
+
+try {
+  $ApiKey = az keyvault secret show `
+    --vault-name $KeyVaultName `
+    --name $SecretName `
+    --query value `
+    --output tsv `
+    --only-show-errors
+
+  if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+    throw &quot;Secret is empty.&quot;
+  }
+
+  $Headers = @{ Authorization = &quot;Bearer $ApiKey&quot; }
+  $Response = Invoke-WebRequest `
+    -Uri $Endpoint `
+    -Headers $Headers `
+    -Method Get `
+    -TimeoutSec 30
+
+  Write-Host &quot;HTTP $($Response.StatusCode)&quot;
+}
+finally {
+  $ApiKey = $null
+}
+</code></pre>
+<p>Interpretation:</p>
+<ul>
+<li><code>401 Invalid API Key</code>: the endpoint received a key but rejected it.</li>
+<li><code>401 Wrong API endpoint</code>: the key belongs to another region, tenant or endpoint.</li>
+<li><code>404 no Route matched</code>: host is reachable but the requested API route does not exist there.</li>
+<li>timeout/DNS/TLS failure: investigate egress, proxy, firewall, private DNS and CA trust.</li>
+</ul>
+<p>For a vendor SDK, test the exact discovery or <code>whoami</code> route used by the deployed SDK, not only a generic <code>/models</code> or <code>/health</code> endpoint.</p>
+<h3 id="mistral-workflows-deployment-and-worker-status">Mistral Workflows deployment and worker status</h3>
+<p>This subsection applies only when the Container App hosts a Mistral Workflows worker. It checks the Maia/Mistral control plane, not the Azure resource state.</p>
+<p>Inputs:</p>
+<pre><code class="language-text">Workflow API base : https://api.maia.dc.mistral.ai
+Deployment name  : default
+Authentication   : Mistral API key supplied interactively or through a secret environment variable
+</code></pre>
+<h4>PowerShell — query deployment and workers — READ-ONLY</h4>
+<p>Prefer an interactive secure prompt. Do not use <code>$ApiKey = &quot;actual-secret&quot;</code> because the value can remain in PowerShell history, transcripts or screen recordings.</p>
+<pre><code class="language-powershell">$WorkflowApiBase = &quot;https://api.maia.dc.mistral.ai&quot;
+$DeploymentName  = &quot;default&quot;
+$SecureApiKey    = Read-Host &quot;Mistral API key&quot; -AsSecureString
+$ApiKey          = [Net.NetworkCredential]::new(&quot;&quot;, $SecureApiKey).Password
+
+try {
+  $Uri = &quot;$WorkflowApiBase/v1/workflows/deployments/$DeploymentName&quot;
+  $Deployment = Invoke-RestMethod `
+    -Method Get `
+    -Uri $Uri `
+    -Headers @{ Authorization = &quot;Bearer $ApiKey&quot; } `
+    -TimeoutSec 30
+
+  $Deployment |
+    Select-Object name, is_active, worker_count, active_worker_count |
+    Format-List
+
+  $Deployment.workers |
+    Select-Object name, is_active, created_at, updated_at |
+    Format-Table -AutoSize
+
+  if (-not $Deployment.is_active -or $Deployment.active_worker_count -lt 1) {
+    throw &quot;[FAILED] Deployment &#39;$DeploymentName&#39; has no active worker.&quot;
+  }
+
+  if ($Deployment.active_worker_count -lt $Deployment.worker_count) {
+    Write-Warning &quot;[WARNING] Only $($Deployment.active_worker_count)/$($Deployment.worker_count) workers are active.&quot;
+  }
+  else {
+    Write-Host &quot;[OK] All $($Deployment.active_worker_count) registered workers are active.&quot; -ForegroundColor Green
+  }
+}
+catch {
+  if ($_.Exception.Response) {
+    $StatusCode = [int]$_.Exception.Response.StatusCode
+    Write-Error &quot;Workflow deployment API request failed. HTTP status: $StatusCode&quot;
+  }
+  else {
+    Write-Error $_.Exception.Message
+  }
+  throw
+}
+finally {
+  $ApiKey = $null
+  Remove-Variable ApiKey, SecureApiKey -ErrorAction SilentlyContinue
+}
+</code></pre>
+<p>For automation, inject a secret environment variable from the CI/CD secret store and remove it immediately after use:</p>
+<pre><code class="language-powershell">$ApiKey = $env:MISTRAL_API_KEY
+if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+  throw &quot;MISTRAL_API_KEY is not set.&quot;
+}
+
+# Run the same Invoke-RestMethod block here.
+
+$ApiKey = $null
+Remove-Item Env:MISTRAL_API_KEY -ErrorAction SilentlyContinue
+</code></pre>
+<p>Sanitized sample output:</p>
+<pre><code class="language-text">name                : default
+is_active           : True
+worker_count        : 2
+active_worker_count : 2
+
+name                                      is_active created_at                 updated_at
+----                                      --------- ----------                 ----------
+orders-worker--0000012-6f8b7c9d4f-abc12   True      2026-08-28T07:28:10Z       2026-08-28T07:31:42Z
+orders-worker--0000012-6f8b7c9d4f-def34   True      2026-08-28T07:28:11Z       2026-08-28T07:31:40Z
+
+[OK] All 2 registered workers are active.
+</code></pre>
+<p>Sample degraded output — investigate the inactive worker:</p>
+<pre><code class="language-text">name                : default
+is_active           : True
+worker_count        : 2
+active_worker_count : 1
+
+WARNING: [WARNING] Only 1/2 workers are active.
+</code></pre>
+<p>Sample failed output — no workflow execution capacity is available:</p>
+<pre><code class="language-text">name                : default
+is_active           : False
+worker_count        : 1
+active_worker_count : 0
+
+Exception: [FAILED] Deployment &#39;default&#39; has no active worker.
+</code></pre>
+<p>Sample authentication failure:</p>
+<pre><code class="language-text">Invoke-RestMethod: Response status code does not indicate success: 401 (Unauthorized).
+Workflow deployment API request failed. HTTP status: 401
+</code></pre>
+<p>Interpretation:</p>
+<ul>
+<li><code>is_active=True</code> and <code>active_worker_count &gt; 0</code>: the deployment has at least one active worker.</li>
+<li><code>worker_count &gt; active_worker_count</code>: one or more registered workers are stale, disconnected or starting.</li>
+<li><code>worker_count &gt; 0</code> and <code>active_worker_count=0</code>: Azure may report the ACA revision as healthy while no worker is available to execute workflows.</li>
+<li><code>404</code>: verify the deployment name and API base URL.</li>
+<li><code>401 Invalid API Key</code>: verify the secret value and rotation state.</li>
+<li><code>401 Wrong API endpoint</code>: the key and Maia/Mistral API base belong to different environments or regions.</li>
+</ul>
+<h4>Bash — query deployment and workers — READ-ONLY</h4>
+<p>This example requires <code>curl</code>, <code>jq</code> and <code>column</code>. The silent prompt prevents the API key from being echoed.</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
+
+WORKFLOW_API_BASE=&quot;https://api.maia.dc.mistral.ai&quot;
+DEPLOYMENT_NAME=&quot;default&quot;
+
+read -r -s -p &quot;Mistral API key: &quot; API_KEY
+printf &#39;\n&#39;
+trap &#39;unset API_KEY&#39; EXIT
+
+DEPLOYMENT_JSON=&quot;$({
+  curl --fail-with-body --silent --show-error \
+    --connect-timeout 10 \
+    --max-time 30 \
+    --header &quot;Authorization: Bearer ${API_KEY}&quot; \
+    &quot;${WORKFLOW_API_BASE}/v1/workflows/deployments/${DEPLOYMENT_NAME}&quot;
+})&quot;
+
+printf &#39;%s&#39; &quot;$DEPLOYMENT_JSON&quot; |
+  jq &#39;{name, is_active, worker_count, active_worker_count}&#39;
+
+printf &#39;%s&#39; &quot;$DEPLOYMENT_JSON&quot; |
+  jq -r &#39;
+    [&quot;NAME&quot;, &quot;ACTIVE&quot;, &quot;CREATED_AT&quot;, &quot;UPDATED_AT&quot;],
+    (.workers[]? | [.name, (.is_active | tostring), .created_at, .updated_at])
+    | @tsv
+  &#39; | column -t -s $&#39;\t&#39;
+
+worker_count=&quot;$(printf &#39;%s&#39; &quot;$DEPLOYMENT_JSON&quot; | jq -r &#39;.worker_count // 0&#39;)&quot;
+active_worker_count=&quot;$(printf &#39;%s&#39; &quot;$DEPLOYMENT_JSON&quot; | jq -r &#39;.active_worker_count // 0&#39;)&quot;
+deployment_active=&quot;$(printf &#39;%s&#39; &quot;$DEPLOYMENT_JSON&quot; | jq -r &#39;.is_active // false&#39;)&quot;
+
+if [[ &quot;$deployment_active&quot; != &quot;true&quot; || &quot;$active_worker_count&quot; -lt 1 ]]; then
+  printf &#39;[FAILED] Deployment %s has no active worker.\n&#39; &quot;$DEPLOYMENT_NAME&quot; &gt;&amp;2
+  exit 2
+elif [[ &quot;$active_worker_count&quot; -lt &quot;$worker_count&quot; ]]; then
+  printf &#39;[WARNING] Only %s/%s workers are active.\n&#39; \
+    &quot;$active_worker_count&quot; &quot;$worker_count&quot; &gt;&amp;2
+else
+  printf &#39;[OK] All %s registered workers are active.\n&#39; &quot;$active_worker_count&quot;
+fi
+
+unset DEPLOYMENT_JSON API_KEY
+trap - EXIT
+</code></pre>
+<p>Sanitized sample output:</p>
+<pre><code class="language-text">{
+  &quot;name&quot;: &quot;default&quot;,
+  &quot;is_active&quot;: true,
+  &quot;worker_count&quot;: 1,
+  &quot;active_worker_count&quot;: 1
+}
+NAME                                     ACTIVE  CREATED_AT             UPDATED_AT
+orders-worker--0000012-6f8b7c9d4f-abc12 true    2026-08-28T07:28:10Z   2026-08-28T07:31:42Z
+[OK] All 1 registered workers are active.
+</code></pre>
+<p>Sample degraded output; the script completes with exit code <code>0</code> but prints a warning:</p>
+<pre><code class="language-text">[WARNING] Only 1/2 workers are active.
+</code></pre>
+<p>Sample failed output; the script exits with code <code>2</code>:</p>
+<pre><code class="language-text">[FAILED] Deployment default has no active worker.
+</code></pre>
+<p>Sample HTTP failure from <code>curl</code>; the script exits non-zero because <code>set -e</code> and <code>--fail-with-body</code> are enabled:</p>
+<pre><code class="language-text">curl: (22) The requested URL returned error: 401
+{&quot;detail&quot;:&quot;Invalid API Key&quot;}
+</code></pre>
+<h4>Run <code>wf-diagnose</code> inside an ACA replica — READ-ONLY</h4>
+<p>First identify the latest revision and a running replica:</p>
+<pre><code class="language-powershell">$RevisionName = az containerapp show `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --query properties.latestRevisionName `
+  --output tsv
+
+Write-Host &quot;Latest revision: $RevisionName&quot;
+
+az containerapp replica list `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --revision $RevisionName `
+  --output table
+</code></pre>
+<p>Sample output:</p>
+<pre><code class="language-text">Latest revision: orders-worker--0000012
+Name                                             CreatedTime                 RunningState    RunningStateDetails
+-----------------------------------------------  --------------------------  --------------  -------------------
+orders-worker--0000012-6f8b7c9d4f-abc12          2026-08-28T07:28:10+00:00   Running         Process is running
+orders-worker--0000012-6f8b7c9d4f-def34          2026-08-28T07:28:11+00:00   Running         Process is running
+</code></pre>
+<p>If the table is empty, confirm that the revision is active and has at least one replica. If <code>RunningState</code> is not <code>Running</code>, inspect system and console logs before attempting <code>wf-diagnose</code>.</p>
+<p>Run the diagnostic module in the application container:</p>
+<pre><code class="language-powershell">$ContainerName = &quot;&lt;container-name&gt;&quot;
+
+az containerapp exec `
+  --name $AppName `
+  --resource-group $ResourceGroup `
+  --container $ContainerName `
+  --command &quot;/app/.venv/bin/python -m mistralai.workflows.scripts.diagnose&quot;
+</code></pre>
+<p>The exec command first shows which revision, replica and container were selected:</p>
+<pre><code class="language-text">INFO: Successfully connected to container: &#39;orders-worker-container&#39;.
+[ Revision: &#39;orders-worker--0000012&#39;, Replica: &#39;orders-worker--0000012-6f8b7c9d4f-abc12&#39; ].
+</code></pre>
+<p>Bash equivalent:</p>
+<pre><code class="language-bash">revision_name=&quot;$(az containerapp show \
+  --name &quot;$APP_NAME&quot; \
+  --resource-group &quot;$RESOURCE_GROUP&quot; \
+  --query properties.latestRevisionName \
+  --output tsv)&quot;
+
+az containerapp replica list \
+  --name &quot;$APP_NAME&quot; \
+  --resource-group &quot;$RESOURCE_GROUP&quot; \
+  --revision &quot;$revision_name&quot; \
+  --output table
+
+az containerapp exec \
+  --name &quot;$APP_NAME&quot; \
+  --resource-group &quot;$RESOURCE_GROUP&quot; \
+  --container &quot;$CONTAINER_NAME&quot; \
+  --command &quot;/app/.venv/bin/python -m mistralai.workflows.scripts.diagnose&quot;
+</code></pre>
+<p>Expected healthy diagnostic sections:</p>
+<pre><code class="language-text">ENVIRONMENT VARIABLES
+  MISTRAL_API_KEY: *** (set)
+  SERVER_URL: https://&lt;expected-workflow-api-host&gt;
+  DEPLOYMENT_NAME: &lt;expected-deployment&gt;
+
+WHOAMI
+  [OK] Mistral API (...): HTTP 200
+
+CONNECTIVITY CHECKS
+  [OK] Temporal (..., tls=True)
+</code></pre>
+<p>Complete result interpretation:</p>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Check result</th>
+<th>Meaning</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MISTRAL_API_KEY: *** (set)</code></td>
+<td>Configuration present</td>
+<td>The environment variable exists; it does not prove the value is correct</td>
+<td>Continue to <code>WHOAMI</code></td>
+</tr>
+<tr>
+<td><code>WHOAMI ... HTTP 200</code></td>
+<td><strong>OK</strong></td>
+<td>API key and API base are accepted</td>
+<td>Continue to connectivity and deployment status</td>
+</tr>
+<tr>
+<td><code>WHOAMI ... HTTP 401</code></td>
+<td><strong>FAILED</strong></td>
+<td>Wrong/revoked key or wrong endpoint</td>
+<td>Verify Key Vault reference, endpoint and secret rotation</td>
+</tr>
+<tr>
+<td><code>Temporal ... [OK]</code></td>
+<td><strong>OK</strong></td>
+<td>Worker can reach the execution engine</td>
+<td>Query deployment worker status</td>
+</tr>
+<tr>
+<td>Temporal timeout/TLS error</td>
+<td><strong>FAILED</strong></td>
+<td>Network, proxy, DNS, CA or scheduler problem</td>
+<td>Inspect ACA egress, DNS and trusted CA configuration</td>
+</tr>
+<tr>
+<td><code>(no workflows registered)</code></td>
+<td>Inconclusive</td>
+<td>Diagnose ran without importing the application worker module</td>
+<td>Run diagnose with the worker module</td>
+</tr>
+<tr>
+<td>Registered workflow/activity names listed</td>
+<td><strong>OK</strong></td>
+<td>Application module imported and definitions registered</td>
+<td>Run a controlled workflow smoke test</td>
+</tr>
+</tbody></table>
+<p><code>wf-diagnose</code> validates the effective SDK configuration, API authentication and execution-engine connectivity from the running container. It does not prove that business workflows and activities were imported. If the report says <code>(no workflows registered)</code>, invoke it with the application&#39;s worker module as documented by that application, for example:</p>
+<pre><code class="language-text">wf-diagnose &lt;python.worker.module&gt;
+</code></pre>
+<p>Sample output after providing the correct worker module:</p>
+<pre><code class="language-text">REGISTERED WORKFLOWS
+  blueprint_to_tickets
+  ticket_to_backlog
+
+REGISTERED ACTIVITIES
+  get_target_branch_commit_id_activity
+  create_work_item_activity
+
+WHOAMI
+  [OK] Mistral API (https://&lt;expected-workflow-api-host&gt;): HTTP 200
+
+CONNECTIVITY CHECKS
+  [OK] Temporal (&lt;scheduler-host&gt;:443, tls=True)
+</code></pre>
+<p>Sample output when the Python module name is wrong:</p>
+<pre><code class="language-text">ModuleNotFoundError: No module named &#39;&lt;python.worker.module&gt;&#39;
+</code></pre>
+<p>This is an application packaging/import problem, not an Azure RBAC or Key Vault failure.</p>
+<p>Do not attach the complete diagnostic report to a public ticket without sanitizing tenant identifiers, namespace values, hostnames and resource names.</p>
+<h2 id="16-reusable-powershell-snapshot">16. Reusable PowerShell snapshot</h2>
+<p>The following read-only block produces a concise incident snapshot:</p>
+<pre><code class="language-powershell">param(
+  [Parameter(Mandatory)][string]$Subscription,
+  [Parameter(Mandatory)][string]$ResourceGroup,
+  [Parameter(Mandatory)][string]$AppName
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+az account set --subscription $Subscription
+
+Write-Host &quot;=== ACCOUNT ===&quot; -ForegroundColor Cyan
+az account show --query &quot;{subscription:name,principal:user.name,type:user.type}&quot; -o table
+
+Write-Host &quot;=== APP ===&quot; -ForegroundColor Cyan
+az containerapp show -n $AppName -g $ResourceGroup `
+  --query &quot;{state:properties.provisioningState,revision:properties.latestRevisionName,image:properties.template.containers[0].image,min:properties.template.scale.minReplicas,max:properties.template.scale.maxReplicas,fqdn:properties.configuration.ingress.fqdn}&quot; `
+  -o jsonc
+
+Write-Host &quot;=== IDENTITY ===&quot; -ForegroundColor Cyan
+az containerapp show -n $AppName -g $ResourceGroup --query identity -o jsonc
+
+Write-Host &quot;=== REGISTRIES ===&quot; -ForegroundColor Cyan
+az containerapp show -n $AppName -g $ResourceGroup `
+  --query &quot;properties.configuration.registries&quot; -o jsonc
+
+Write-Host &quot;=== SECRET REFERENCES ===&quot; -ForegroundColor Cyan
+az containerapp show -n $AppName -g $ResourceGroup `
+  --query &quot;properties.configuration.secrets[].{name:name,keyVaultUrl:keyVaultUrl,identity:identity}&quot; -o table
+
+Write-Host &quot;=== CONTAINERS AND ENV METADATA ===&quot; -ForegroundColor Cyan
+az containerapp show -n $AppName -g $ResourceGroup `
+  --query &quot;properties.template.containers[].{name:name,image:image,env:env[].{name:name,secretRef:secretRef}}&quot; -o jsonc
+
+Write-Host &quot;=== REVISIONS ===&quot; -ForegroundColor Cyan
+az containerapp revision list -n $AppName -g $ResourceGroup `
+  --query &quot;[].{name:name,active:properties.active,health:properties.healthState,replicas:properties.replicas,created:properties.createdTime}&quot; -o table
+
+Write-Host &quot;=== RECENT SYSTEM LOGS ===&quot; -ForegroundColor Cyan
+az containerapp logs show -n $AppName -g $ResourceGroup --type system --tail 30
+</code></pre>
+<p>Do not redirect this snapshot to a public ticket without reviewing environment-variable names, URLs, resource IDs and other potentially sensitive metadata.</p>
+<h2 id="17-common-failures-and-interpretation">17. Common failures and interpretation</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Root cause</th>
+<th>Verification</th>
+<th>Recommended action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>AuthorizationFailed</code> on <code>containerApps/read</code></td>
+<td>Service Connection lacks ACA read</td>
+<td>Inspect object ID and role assignments</td>
+<td>Grant Reader or Container Apps Contributor at the narrowest scope</td>
+</tr>
+<tr>
+<td><code>LinkedAuthorizationFailed</code> on <code>assign/action</code></td>
+<td>Caller can update ACA but cannot link UAMI</td>
+<td>Check linked identity scope</td>
+<td>Grant Managed Identity Operator on that identity</td>
+</tr>
+<tr>
+<td><code>secrets=null</code></td>
+<td>Key Vault values exist but ACA references were never configured</td>
+<td>Inspect <code>properties.configuration.secrets</code></td>
+<td>Create ACA Key Vault references and env mappings</td>
+</tr>
+<tr>
+<td><code>containers=null</code> or CLI <code>NoneType has no len()</code></td>
+<td>App resource was left incomplete after failed creation</td>
+<td>Query ARM directly and inspect revision</td>
+<td>Reconcile the full template or recreate safely</td>
+</tr>
+<tr>
+<td><code>Invalid API Key</code></td>
+<td>Empty, malformed, revoked or wrong key</td>
+<td>Validate secret mapping, whitespace and vendor endpoint</td>
+<td>Rotate key and restart revision</td>
+</tr>
+<tr>
+<td><code>Wrong API endpoint</code></td>
+<td>Key belongs to another regional or tenant endpoint</td>
+<td>Test the SDK&#39;s exact discovery route</td>
+<td>Use matching key/endpoint pair</td>
+</tr>
+<tr>
+<td><code>404 no Route matched</code></td>
+<td>Host reachable, route unavailable</td>
+<td>Check exact request path and API version</td>
+<td>Use the documented API host/path</td>
+</tr>
+<tr>
+<td><code>ImagePullBackOff</code> or registry error</td>
+<td>Missing AcrPull, registry identity or image tag</td>
+<td>Inspect registry config, roles and ACR tags</td>
+<td>Fix runtime identity and immutable image reference</td>
+</tr>
+<tr>
+<td><code>ManagedClusterSuspended</code></td>
+<td>Environment has no runnable app</td>
+<td>List revisions/replicas</td>
+<td>Restore a valid app/revision before environment changes</td>
+</tr>
+<tr>
+<td><code>ScaledObjectCheckFailed</code></td>
+<td>Invalid or empty scale trigger</td>
+<td>Inspect <code>properties.template.scale.rules</code></td>
+<td>Correct/remove rule and set intentional min replicas</td>
+</tr>
+<tr>
+<td>container exits with code 1</td>
+<td>Application startup exception</td>
+<td>Console logs and revision health</td>
+<td>Fix configuration/code, redeploy and verify</td>
+</tr>
+<tr>
+<td>local CLI certificate failure</td>
+<td>Corporate proxy CA not trusted</td>
+<td>Compare Portal logs and CLI error</td>
+<td>Configure trusted CA bundle; do not disable TLS verification</td>
+</tr>
+</tbody></table>
+<h2 id="18-monitoring-cadence">18. Monitoring cadence</h2>
+<h3 id="after-every-deployment">After every deployment</h3>
+<ul>
+<li>Confirm the immutable image tag matches the pipeline build ID.</li>
+<li>Confirm latest revision health and replica count.</li>
+<li>Confirm identity, registry and required secret references are present.</li>
+<li>Inspect startup application logs for exceptions.</li>
+<li>Inspect system logs for image pull, scheduling and scale errors.</li>
+<li>Run application health or worker dependency checks.</li>
+<li>Preserve the previous image tag for rollback.</li>
+</ul>
+<h3 id="daily-operational-checks">Daily operational checks</h3>
+<ul>
+<li>Failed or unhealthy revisions.</li>
+<li>Container restarts and process exit codes.</li>
+<li>CPU and memory saturation.</li>
+<li>Replica count versus workload.</li>
+<li>HTTP error rate/latency or queue backlog/processing age.</li>
+<li>Key Vault, ACR and external dependency failures.</li>
+<li>Recent policy or RBAC changes.</li>
+</ul>
+<h3 id="incident-checklist">Incident checklist</h3>
+<ol>
+<li>Record timestamp, subscription, resource group, app and latest revision.</li>
+<li>Capture the read-only snapshot.</li>
+<li>Check system health and Azure Activity Log.</li>
+<li>Compare current image/configuration with the last known good revision.</li>
+<li>Inspect application and system logs.</li>
+<li>Validate identity, registry and Key Vault reference chains.</li>
+<li>Validate external endpoints using the exact SDK route.</li>
+<li>Decide between forward fix, restart or rollback.</li>
+<li>Verify recovery with health, logs, metrics and business-level processing.</li>
+<li>Document root cause, remaining risk and preventive action.</li>
+</ol>
+<h2 id="19-production-recommendations">19. Production recommendations</h2>
+<ul>
+<li>Use infrastructure as code to reconcile ACA identity, registry, secrets, environment variables, scale and ingress on both create and update paths.</li>
+<li>Separate infrastructure provisioning from application image deployment, but validate their contract in the pipeline.</li>
+<li>Use workload identity federation for Azure DevOps Service Connections.</li>
+<li>Scope deployment roles to the target resource group or resource whenever possible.</li>
+<li>Give runtime identities read-only secret access; avoid Key Vault Secrets Officer unless mutation is required.</li>
+<li>Add deployment verification and automatic failure when revisions are unhealthy.</li>
+<li>Store logs centrally and alert on termination, unhealthy revisions, sustained resource saturation and dependency failures.</li>
+<li>Use immutable tags/digests and document rollback procedures.</li>
+<li>Rotate any credential exposed in source code, release definitions, terminal history, screenshots or tickets.</li>
+</ul>
+<h2 id="quick-command-index">Quick command index</h2>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>List apps</td>
+<td><code>az containerapp list -g $ResourceGroup -o table</code></td>
+</tr>
+<tr>
+<td>App snapshot</td>
+<td><code>az containerapp show -n $AppName -g $ResourceGroup -o jsonc</code></td>
+</tr>
+<tr>
+<td>Revisions</td>
+<td><code>az containerapp revision list -n $AppName -g $ResourceGroup -o table</code></td>
+</tr>
+<tr>
+<td>Replicas</td>
+<td><code>az containerapp replica list -n $AppName -g $ResourceGroup --revision $RevisionName -o table</code></td>
+</tr>
+<tr>
+<td>Console logs</td>
+<td><code>az containerapp logs show -n $AppName -g $ResourceGroup --type console --tail 100</code></td>
+</tr>
+<tr>
+<td>System logs</td>
+<td><code>az containerapp logs show -n $AppName -g $ResourceGroup --type system --tail 100</code></td>
+</tr>
+<tr>
+<td>Identity</td>
+<td><code>az containerapp show -n $AppName -g $ResourceGroup --query identity -o jsonc</code></td>
+</tr>
+<tr>
+<td>Registries</td>
+<td><code>az containerapp show -n $AppName -g $ResourceGroup --query properties.configuration.registries -o jsonc</code></td>
+</tr>
+<tr>
+<td>Secret references</td>
+<td><code>az containerapp show -n $AppName -g $ResourceGroup --query properties.configuration.secrets -o jsonc</code></td>
+</tr>
+<tr>
+<td>Scale</td>
+<td><code>az containerapp show -n $AppName -g $ResourceGroup --query properties.template.scale -o jsonc</code></td>
+</tr>
+<tr>
+<td>Ingress</td>
+<td><code>az containerapp show -n $AppName -g $ResourceGroup --query properties.configuration.ingress -o jsonc</code></td>
+</tr>
+<tr>
+<td>Metric definitions</td>
+<td><code>az monitor metrics list-definitions --resource $AppId -o table</code></td>
+</tr>
+<tr>
+<td>Activity Log</td>
+<td><code>az monitor activity-log list -g $ResourceGroup --offset 24h -o table</code></td>
+</tr>
+<tr>
+<td>Workflow deployment/worker status</td>
+<td><code>Invoke-RestMethod -Uri &quot;$WorkflowApiBase/v1/workflows/deployments/$DeploymentName&quot; -Headers @{ Authorization = &quot;Bearer $ApiKey&quot; }</code></td>
+</tr>
+<tr>
+<td>Workflow runtime diagnostic</td>
+<td><code>az containerapp exec ... --command &quot;/app/.venv/bin/python -m mistralai.workflows.scripts.diagnose&quot;</code></td>
+</tr>
+</tbody></table>
+
+</main>
+</div>
+</body>
+</html>

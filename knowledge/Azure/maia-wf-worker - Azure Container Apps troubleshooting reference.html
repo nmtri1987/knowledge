@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<!-- saved from url=(0135)file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>maia-wf-worker - Azure Container Apps troubleshooting reference</title>
+  <style>
+    :root { --ink:#172033; --muted:#596579; --accent:#0067b8; --accent2:#0b7a75; --line:#d8e0ea; --soft:#f4f7fb; --warn:#fff6d8; --code:#111827; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:#edf2f7; font:15px/1.62 "Segoe UI", Arial, sans-serif; }
+    .shell { max-width:1180px; margin:0 auto; display:grid; grid-template-columns:280px minmax(0,1fr); gap:24px; padding:24px; }
+    .toc { position:sticky; top:18px; align-self:start; max-height:calc(100vh - 36px); overflow:auto; background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; box-shadow:0 4px 16px rgba(20,35,60,.07); }
+    .toc h2 { margin:0 0 10px; font-size:18px; border:0; padding:0; }
+    .toc ol { list-style:none; margin:0; padding:0; }
+    .toc li { margin:5px 0; }
+    .toc .toc-level-3 { margin-left:14px; font-size:13px; }
+    .toc a { color:#334155; text-decoration:none; }
+    .toc a:hover { color:var(--accent); text-decoration:underline; }
+    main { min-width:0; background:#fff; border:1px solid var(--line); border-radius:12px; padding:36px 44px 56px; box-shadow:0 4px 16px rgba(20,35,60,.07); }
+    h1 { font-size:32px; line-height:1.18; margin:0 0 8px; color:#102a43; }
+    h2 { margin:42px 0 14px; padding-bottom:8px; border-bottom:2px solid #c8d9eb; font-size:24px; color:#123b5d; }
+    h3 { margin:27px 0 8px; font-size:18px; color:var(--accent2); }
+    p { margin:9px 0 14px; }
+    a { color:var(--accent); }
+    hr { border:0; border-top:1px solid var(--line); margin:34px 0; }
+    blockquote { margin:18px 0; padding:13px 16px; border-left:4px solid #d69e00; background:var(--warn); border-radius:0 8px 8px 0; }
+    pre { margin:13px 0 19px; padding:16px 18px; overflow:auto; border-radius:9px; background:var(--code); color:#e5eef9; box-shadow:inset 0 0 0 1px #27344a; font:13px/1.55 Consolas, "Cascadia Mono", monospace; }
+    code { padding:.12em .34em; border-radius:4px; background:#eaf0f7; color:#9b1c31; font-family:Consolas, "Cascadia Mono", monospace; }
+    pre code { padding:0; background:transparent; color:inherit; }
+    ul,ol { padding-left:24px; }
+    li { margin:4px 0; }
+    .task { list-style:none; margin-left:-22px; }
+    .task input { margin-right:7px; }
+    .table-wrap { overflow:auto; margin:14px 0 20px; border:1px solid var(--line); border-radius:8px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; background:#eaf2f8; color:#123b5d; }
+    th,td { padding:9px 11px; border-bottom:1px solid var(--line); vertical-align:top; }
+    tr:last-child td { border-bottom:0; }
+    tbody tr:nth-child(even) { background:#fafcff; }
+    .actions { position:fixed; right:18px; bottom:18px; display:flex; gap:8px; z-index:5; }
+    button { border:1px solid #b7c6d8; border-radius:8px; padding:8px 12px; background:#fff; color:#234; cursor:pointer; box-shadow:0 2px 8px rgba(20,35,60,.12); }
+    button:hover { background:#f4f7fb; }
+    @media (max-width:900px) { .shell { display:block; padding:10px; } .toc { position:relative; top:auto; max-height:none; margin-bottom:12px; } main { padding:24px 20px 40px; } }
+    @media print { body { background:#fff; font-size:10pt; } .shell { display:block; max-width:none; padding:0; } .toc,.actions { display:none; } main { border:0; box-shadow:none; padding:0; } h2 { page-break-after:avoid; } pre,table { page-break-inside:avoid; } a { color:inherit; text-decoration:none; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="toc"><h2>Contents</h2><ol>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#maia-wf-worker-powershell-and-azure-cli-runbook"><code>maia-wf-worker</code> - PowerShell and Azure CLI runbook</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#0-session-variables-and-preflight">0. Session variables and preflight</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#1-wrong-subscription-or-unregistered-resource-provider">1. Wrong subscription or unregistered resource provider</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#2-show-container-app-properties-safely">2. Show Container App properties safely</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-2">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-2">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-2">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-2">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#3-list-revisions-and-verify-the-active-revision">3. List revisions and verify the active revision</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-3">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-3">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-3">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-3">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#4-check-console-and-system-logs">4. Check console and system logs</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-4">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-4">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-4">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-4">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#5-open-binsh-and-inspect-the-running-container-safely">5. Open <code>/bin/sh</code> and inspect the running container safely</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-5">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-5">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-5">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-5">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#6-check-environment-variables-and-secret-references">6. Check environment variables and secret references</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-6">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-6">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-update-a-normal-environment-variable">Recommended fix - update a normal environment variable</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-map-an-aca-secret-to-an-environment-variable">Recommended fix - map an ACA secret to an environment variable</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-6">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#7-check-and-update-key-vault-secrets-safely">7. Check and update Key Vault secrets safely</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-7">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-7">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-update-a-key-vault-value-interactively">Recommended fix - update a Key Vault value interactively</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-7">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#8-check-and-update-aca-key-vault-secret-references">8. Check and update ACA Key Vault secret references</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-8">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-8">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-6">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-8">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#9-check-managed-identity-and-key-vault-rbac">9. Check managed identity and Key Vault RBAC</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-9">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-9">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-7">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-9">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#10-check-registry-configuration-and-acrpull">10. Check registry configuration and <code>AcrPull</code></a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-10">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-10">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-8">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-10">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#11-check-federated-credentials-and-related-identity-details">11. Check federated credentials and related identity details</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-11">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-11">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-9">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-11">Production notes</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#12-troubleshoot-401-wrong-api-endpoint">12. Troubleshoot <code>401 Wrong API endpoint</code></a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#likely-cause-12">Likely cause</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#how-to-check-12">How to check</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#recommended-fix-10">Recommended fix</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#verification-criteria">Verification criteria</a></li>
+<li class="toc-level-3"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#production-notes-and-remaining-risks">Production notes and remaining risks</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#13-one-pass-read-only-diagnostic-script">13. One-pass read-only diagnostic script</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#14-command-impact-matrix">14. Command impact matrix</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#15-final-production-checklist">15. Final production checklist</a></li>
+<li class="toc-level-2"><a href="file:///C:/Users/pcm094/.codex/.chatgpt-projects/g-p-6a5b4d2e9f68819193c97178f7796269/ACA-maia-wf-worker-troubleshooting-reference.html#official-references">Official references</a></li>
+</ol></nav>
+    <main><h1 id="azure-container-apps-troubleshooting-reference">Azure Container Apps troubleshooting reference</h1>
+<h2 id="maia-wf-worker-powershell-and-azure-cli-runbook"><code>maia-wf-worker</code> - PowerShell and Azure CLI runbook</h2>
+<p><strong>Last reviewed:</strong> 2026-08-28 <strong>Scope:</strong> Azure Container Apps worker deployment, revisions, logs, managed identity, ACR, Key Vault references, Azure RBAC, federated credentials, and Mistral <code>401 Wrong API endpoint</code>.</p>
+<p>This runbook uses the actual resources from the troubleshooting session:</p>
+<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Example value</th></tr></thead><tbody><tr><td>Subscription</td><td><code>subs-bis-sandbox</code></td></tr><tr><td>Subscription ID</td><td><code>c0149d25-cc9a-4114-acad-15bc8a8c0546</code></td></tr><tr><td>Resource group</td><td><code>rg-weu-azu-aidlc-sb</code></td></tr><tr><td>Container App</td><td><code>maia-wf-worker</code></td></tr><tr><td>Container</td><td><code>maia-wf-worker-container</code></td></tr><tr><td>User-assigned managed identity</td><td><code>maia-wf-identity</code></td></tr><tr><td>Key Vault</td><td><code>kv-maia-wf</code></td></tr><tr><td>Container registry</td><td><code>acrmaiawf</code> / <code>acrmaiawf.azurecr.io</code></td></tr><tr><td>Example image</td><td><code>acrmaiawf.azurecr.io/maia-wf-worker:117418</code></td></tr><tr><td>Correct Mistral global endpoint</td><td><code>https://api.mistral.ai</code></td></tr><tr><td>Incorrect endpoint observed</td><td><code>https://api.eu.mistral.ai</code></td></tr></tbody></table></div>
+<blockquote><strong>Safety rule:</strong> Never print, paste, or log secret values. The commands below inspect secret names, references, status, timestamps, versions, identities, and RBAC only. Do not use <code>--debug</code> while handling secrets.</blockquote>
+<h2 id="0-session-variables-and-preflight">0. Session variables and preflight</h2>
+<p>Set the shared variables once at the start of the PowerShell session:</p>
+<pre><code class="language-powershell">$subscription   = "subs-bis-sandbox"
+$subscriptionId = "c0149d25-cc9a-4114-acad-15bc8a8c0546"
+$rg             = "rg-weu-azu-aidlc-sb"
+$app            = "maia-wf-worker"
+$container      = "maia-wf-worker-container"
+$identity       = "maia-wf-identity"
+$kv             = "kv-maia-wf"
+$acr            = "acrmaiawf"</code></pre>
+<p>Confirm the CLI and Container Apps extension are available:</p>
+<pre><code class="language-powershell">az version
+az extension show --name containerapp -o table</code></pre>
+<p>If the extension is missing, install it. If it is old, update it:</p>
+<pre><code class="language-powershell">az extension add --name containerapp --upgrade</code></pre>
+<p>This changes only the local CLI installation. It does <strong>not</strong> create an ACA revision.</p>
+<hr>
+<h2 id="1-wrong-subscription-or-unregistered-resource-provider">1. Wrong subscription or unregistered resource provider</h2>
+<h3 id="likely-cause">Likely cause</h3>
+<p>Azure CLI is using <code>subs-bis-cds-np</code> instead of <code>subs-bis-sandbox</code>, or <code>Microsoft.App</code> is not registered in the selected subscription. The provider error occurs before Azure reaches <code>maia-wf-worker</code>.</p>
+<h3 id="how-to-check">How to check</h3>
+<pre><code class="language-powershell">az account show `
+  --query "{Name:name, Id:id, TenantId:tenantId}" `
+  -o table
+
+az provider show `
+  --namespace Microsoft.App `
+  --query "registrationState" `
+  -o tsv</code></pre>
+<p>Confirm the resource resolves in the selected subscription:</p>
+<pre><code class="language-powershell">az resource show `
+  --resource-group $rg `
+  --name $app `
+  --resource-type Microsoft.App/containerApps `
+  --query id `
+  -o tsv</code></pre>
+<h3 id="recommended-fix">Recommended fix</h3>
+<p>Switch to the known subscription:</p>
+<pre><code class="language-powershell">az account set --subscription $subscription
+
+az account show `
+  --query "{Name:name, Id:id}" `
+  -o table</code></pre>
+<p>If the correct subscription is selected and the provider is still unregistered:</p>
+<pre><code class="language-powershell">az provider register `
+  --namespace Microsoft.App `
+  --wait</code></pre>
+<p>Verify that the final output is <code>Registered</code>:</p>
+<pre><code class="language-powershell">az provider show `
+  --namespace Microsoft.App `
+  --query "registrationState" `
+  -o tsv</code></pre>
+<h3 id="production-notes">Production notes</h3>
+<ul><li>These commands do <strong>not</strong> create an ACA revision.</li><li>Provider registration requires subscription-scope permission. Resource-group Contributor alone may be insufficient.</li><li>Always verify the subscription before running any update, restart, RBAC, or secret operation.</li></ul>
+<hr>
+<h2 id="2-show-container-app-properties-safely">2. Show Container App properties safely</h2>
+<h3 id="likely-cause-2">Likely cause</h3>
+<p>The deployment may be incomplete: <code>provisioningState=Failed</code>, or identity, registry, secrets, and containers may be <code>null</code>.</p>
+<h3 id="how-to-check-2">How to check</h3>
+<p>Show the high-value properties without retrieving secret values:</p>
+<pre><code class="language-powershell">az containerapp show `
+  --name $app `
+  --resource-group $rg `
+  --query "{
+    state:properties.provisioningState,
+    deploymentErrors:properties.deploymentErrors,
+    revisionMode:properties.configuration.activeRevisionsMode,
+    latestRevision:properties.latestRevisionName,
+    latestReadyRevision:properties.latestReadyRevisionName,
+    identity:identity,
+    registries:properties.configuration.registries,
+    secrets:properties.configuration.secrets[].{
+      name:name,
+      keyVaultUrl:keyVaultUrl,
+      identity:identity
+    },
+    containers:properties.template.containers[].{
+      name:name,
+      image:image,
+      resources:resources,
+      env:env
+    }
+  }" `
+  -o jsonc</code></pre>
+<p>Compact state view:</p>
+<pre><code class="language-powershell">az containerapp show `
+  -n $app `
+  -g $rg `
+  --query "{
+    state:properties.provisioningState,
+    latest:properties.latestRevisionName,
+    ready:properties.latestReadyRevisionName,
+    fqdn:properties.configuration.ingress.fqdn
+  }" `
+  -o table</code></pre>
+<h3 id="recommended-fix-2">Recommended fix</h3>
+<ul><li>If <code>state=Failed</code> and the template sections are <code>null</code>, inspect deployment and activity logs before recreating the app.</li><li>If the app is provisioned but a revision fails, continue with revision and log checks below.</li><li>Do not assume missing Key Vault secrets are the root cause unless system logs report secret resolution failure.</li></ul>
+<h3 id="production-notes-2">Production notes</h3>
+<p>These commands are read-only and do <strong>not</strong> create a revision.</p>
+<hr>
+<h2 id="3-list-revisions-and-verify-the-active-revision">3. List revisions and verify the active revision</h2>
+<h3 id="likely-cause-3">Likely cause</h3>
+<p>An update created a new revision, but the old revision is still active; the newest revision is stuck in <code>Activating</code>; or traffic/runtime work is still handled by an older revision.</p>
+<h3 id="how-to-check-3">How to check</h3>
+<p>List all revisions, including inactive revisions:</p>
+<pre><code class="language-powershell">az containerapp revision list `
+  --name $app `
+  --resource-group $rg `
+  --all `
+  --query "[].{
+    Revision:name,
+    Active:properties.active,
+    Created:properties.createdTime,
+    RunningState:properties.runningState,
+    HealthState:properties.healthState,
+    Replicas:properties.replicas
+  }" `
+  -o table</code></pre>
+<p>Check revision mode:</p>
+<pre><code class="language-powershell">az containerapp show `
+  -n $app `
+  -g $rg `
+  --query "properties.configuration.activeRevisionsMode" `
+  -o tsv</code></pre>
+<p>Resolve the newest active revision safely:</p>
+<pre><code class="language-powershell">$revision = az containerapp revision list `
+  -n $app `
+  -g $rg `
+  --all `
+  --query 'sort_by([?properties.active==`true`], &amp;properties.createdTime)[-1].name' `
+  -o tsv
+
+Write-Host "Newest active revision: $revision"</code></pre>
+<p>Inspect it:</p>
+<pre><code class="language-powershell">az containerapp revision show `
+  -n $app `
+  -g $rg `
+  --revision $revision `
+  --query "properties.{
+    active:active,
+    createdTime:createdTime,
+    runningState:runningState,
+    healthState:healthState,
+    replicas:replicas,
+    containers:template.containers[].{
+      name:name,
+      image:image,
+      env:env
+    }
+  }" `
+  -o jsonc</code></pre>
+<p>Cross-check the app's latest and latest-ready revision names:</p>
+<pre><code class="language-powershell">az containerapp show `
+  -n $app `
+  -g $rg `
+  --query "{
+    latest:properties.latestRevisionName,
+    latestReady:properties.latestReadyRevisionName
+  }" `
+  -o table</code></pre>
+<p>For an app with ingress, inspect traffic allocation:</p>
+<pre><code class="language-powershell">az containerapp ingress traffic show `
+  -n $app `
+  -g $rg `
+  -o table</code></pre>
+<h3 id="recommended-fix-3">Recommended fix</h3>
+<p>Restart an existing revision after a secret rotation or transient failure:</p>
+<pre><code class="language-powershell">az containerapp revision restart `
+  -n $app `
+  -g $rg `
+  --revision $revision</code></pre>
+<p>Restarting does <strong>not</strong> create a new revision.</p>
+<p>If multiple-revision mode is intentional and the new revision is verified healthy, deactivate the old revision:</p>
+<pre><code class="language-powershell">az containerapp revision deactivate `
+  -n $app `
+  -g $rg `
+  --revision "maia-wf-worker--0000005"</code></pre>
+<p>Deactivation does <strong>not</strong> create a new revision.</p>
+<p>For this background worker, use single revision mode unless concurrent revisions are deliberately required:</p>
+<pre><code class="language-powershell">az containerapp revision set-mode `
+  -n $app `
+  -g $rg `
+  --mode single</code></pre>
+<p>Changing revision mode is application-scoped and does <strong>not</strong> create a new revision.</p>
+<h3 id="production-notes-3">Production notes</h3>
+<ul><li>Do not deactivate the previous healthy revision while the new revision is <code>Activating</code> or <code>HealthState=None</code>.</li><li>Expected validation: <code>latestRevisionName</code> equals <code>latestReadyRevisionName</code>, and the target revision is active, <code>Running</code>, and <code>Healthy</code>.</li><li>Two active worker revisions can process work concurrently. Confirm the workflow supports multiple workers, idempotency, duplicate delivery, ordering, and safe retries before enabling this deliberately.</li></ul>
+<hr>
+<h2 id="4-check-console-and-system-logs">4. Check console and system logs</h2>
+<h3 id="likely-cause-4">Likely cause</h3>
+<p>System logs explain image pulls, secret resolution, scheduling, and container lifecycle. Console logs explain application startup and errors such as <code>401 Wrong API endpoint</code>.</p>
+<h3 id="how-to-check-4">How to check</h3>
+<p>Follow console logs for a specific revision:</p>
+<pre><code class="language-powershell">az containerapp logs show `
+  -n $app `
+  -g $rg `
+  --revision $revision `
+  --container $container `
+  --type console `
+  --follow</code></pre>
+<p>Read recent console logs without following:</p>
+<pre><code class="language-powershell">az containerapp logs show `
+  -n $app `
+  -g $rg `
+  --revision $revision `
+  --container $container `
+  --type console `
+  --tail 200</code></pre>
+<p>Read platform/system logs:</p>
+<pre><code class="language-powershell">az containerapp logs show `
+  -n $app `
+  -g $rg `
+  --type system `
+  --tail 200</code></pre>
+<p>Useful system-log patterns:</p>
+<pre><code class="language-text">Failed to pull image
+Key Vault
+ManagedIdentity
+Forbidden
+403
+failed to resolve secret
+ContainerTerminated
+ProcessExited</code></pre>
+<h3 id="recommended-fix-4">Recommended fix</h3>
+<p>Use the log category to choose the next check:</p>
+<div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Next check</th></tr></thead><tbody><tr><td>Image pull failure</td><td>Registry configuration and <code>AcrPull</code></td></tr><tr><td>Key Vault/403/secret resolution</td><td>Identity assignment, Key Vault reference, and RBAC</td></tr><tr><td>Container starts then exit code 1</td><td>Application console log and configuration</td></tr><tr><td>Mistral <code>401 Wrong API endpoint</code></td><td><code>SERVER_URL</code> and effective SDK config</td></tr></tbody></table></div>
+<h3 id="production-notes-4">Production notes</h3>
+<ul><li>Log commands are read-only and do <strong>not</strong> create a revision.</li><li>Avoid printing full configuration objects if the application might log secret values. The observed Mistral configuration masked <code>mistral_api_key</code>, but do not assume every library does so.</li></ul>
+<hr>
+<h2 id="5-open-binsh-and-inspect-the-running-container-safely">5. Open <code>/bin/sh</code> and inspect the running container safely</h2>
+<h3 id="likely-cause-5">Likely cause</h3>
+<p>The configured environment variable exists in ACA but the application ignores it, or the deployed package uses a different config key.</p>
+<h3 id="how-to-check-5">How to check</h3>
+<p>Open a shell on the selected revision:</p>
+<pre><code class="language-powershell">az containerapp exec `
+  -n $app `
+  -g $rg `
+  --revision $revision `
+  --container $container `
+  --command "/bin/sh"</code></pre>
+<p>If there is only one running revision/container, the shorter form is often enough:</p>
+<pre><code class="language-powershell">az containerapp exec `
+  -n maia-wf-worker `
+  -g rg-weu-azu-aidlc-sb `
+  --command "/bin/sh"</code></pre>
+<p>Inside the container, list environment variable <strong>names only</strong>:</p>
+<pre><code class="language-sh">printenv | cut -d= -f1 | sort</code></pre>
+<p>Check whether required variables are present without printing their values:</p>
+<pre><code class="language-sh">for name in MISTRAL_API_KEY AZURE_DEVOPS_ORG_URL AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET SERVER_URL; do
+  if printenv "$name" &gt;/dev/null 2&gt;&amp;1; then
+    echo "$name=SET"
+  else
+    echo "$name=MISSING"
+  fi
+done</code></pre>
+<p>Inspect how the installed Mistral Workflows package maps <code>server_url</code>:</p>
+<pre><code class="language-sh">grep -Rni "server_url" \
+  /app/.venv/lib/python3.12/site-packages/mistralai/workflows/core/config
+
+sed -n '1,220p' \
+  /app/.venv/lib/python3.12/site-packages/mistralai/workflows/core/config/config.py</code></pre>
+<h3 id="recommended-fix-5">Recommended fix</h3>
+<p>If the image does not contain <code>/bin/sh</code>, use a shell that exists in the image. If the container crash-loops too quickly to exec, use console logs or temporarily deploy a diagnostic revision with an overridden startup command through the controlled deployment pipeline.</p>
+<h3 id="production-notes-5">Production notes</h3>
+<ul><li><code>exec</code> is read-only unless commands run inside the container mutate data. It does <strong>not</strong> create a revision.</li><li>Do not run <code>env</code>, <code>printenv</code> without filtering, <code>echo $SECRET</code>, or token/API calls that expose credentials in terminal history or captured logs.</li><li>Changes made inside a container filesystem are ephemeral and must not be treated as a production fix.</li></ul>
+<hr>
+<h2 id="6-check-environment-variables-and-secret-references">6. Check environment variables and secret references</h2>
+<h3 id="likely-cause-6">Likely cause</h3>
+<p>An environment variable is missing, points to the wrong ACA secret name, or exists but is not the variable read by the SDK.</p>
+<h3 id="how-to-check-6">How to check</h3>
+<p>Show environment mappings. Secret-backed variables display <code>secretRef</code>, not the secret value:</p>
+<pre><code class="language-powershell">az containerapp show `
+  -n $app `
+  -g $rg `
+  --query "properties.template.containers[].{
+    container:name,
+    env:env[].{
+      name:name,
+      value:value,
+      secretRef:secretRef
+    }
+  }" `
+  -o jsonc</code></pre>
+<p>Expected secret mappings include:</p>
+<pre><code class="language-text">MISTRAL_API_KEY       -&gt; secretRef: mistral-api-key
+AZURE_DEVOPS_ORG_URL  -&gt; secretRef: azure-devops-org-url
+AZURE_TENANT_ID       -&gt; secretRef: azure-tenant-id
+AZURE_CLIENT_ID       -&gt; secretRef: azure-client-id
+AZURE_CLIENT_SECRET   -&gt; secretRef: azure-client-secret</code></pre>
+<p>Show the environment of a specific revision:</p>
+<pre><code class="language-powershell">az containerapp revision show `
+  -n $app `
+  -g $rg `
+  --revision $revision `
+  --query "properties.template.containers[0].env" `
+  -o table</code></pre>
+<h3 id="recommended-fix-update-a-normal-environment-variable">Recommended fix - update a normal environment variable</h3>
+<p>The Mistral worker reads <code>SERVER_URL</code> for <code>worker.server_url</code>. Update the correct variable:</p>
+<pre><code class="language-powershell">az containerapp update `
+  -n $app `
+  -g $rg `
+  --set-env-vars "SERVER_URL=https://api.mistral.ai"</code></pre>
+<p><strong>This changes <code>properties.template</code> and creates a new revision.</strong></p>
+<p>Remove the unused or misleading variable:</p>
+<pre><code class="language-powershell">az containerapp update `
+  -n $app `
+  -g $rg `
+  --remove-env-vars MISTRAL_API_URL</code></pre>
+<p><strong>This also creates a new revision.</strong></p>
+<p>Prefer one update, and therefore one new revision, when both changes are needed:</p>
+<pre><code class="language-powershell">az containerapp update `
+  -n $app `
+  -g $rg `
+  --remove-env-vars MISTRAL_API_URL `
+  --set-env-vars "SERVER_URL=https://api.mistral.ai"</code></pre>
+<h3 id="recommended-fix-map-an-aca-secret-to-an-environment-variable">Recommended fix - map an ACA secret to an environment variable</h3>
+<pre><code class="language-powershell">az containerapp update `
+  -n $app `
+  -g $rg `
+  --set-env-vars `
+    "MISTRAL_API_KEY=secretref:mistral-api-key" `
+    "AZURE_DEVOPS_ORG_URL=secretref:azure-devops-org-url" `
+    "AZURE_TENANT_ID=secretref:azure-tenant-id" `
+    "AZURE_CLIENT_ID=secretref:azure-client-id" `
+    "AZURE_CLIENT_SECRET=secretref:azure-client-secret"</code></pre>
+<p><strong>Changing environment mappings creates a new revision.</strong></p>
+<h3 id="production-notes-6">Production notes</h3>
+<ul><li>Validate the new revision before retiring the previous revision.</li><li>Do not use mutable image tags such as <code>latest</code>; keep an immutable build tag such as <code>117418</code> or, preferably, an image digest.</li><li>If <code>worker.server_url</code> changes but <code>agent.mistral_client_server_url</code> remains on the EU endpoint, inspect the package configuration and set the separate supported client setting. Do not invent an environment variable name.</li></ul>
+<hr>
+<h2 id="7-check-and-update-key-vault-secrets-safely">7. Check and update Key Vault secrets safely</h2>
+<h3 id="likely-cause-7">Likely cause</h3>
+<p>One of the five secrets is missing, disabled, expired, or has an outdated version:</p>
+<pre><code class="language-text">mistral-api-key
+azure-devops-org-url
+azure-tenant-id
+azure-client-id
+azure-client-secret</code></pre>
+<h3 id="how-to-check-7">How to check</h3>
+<p>List secret names only:</p>
+<pre><code class="language-powershell">az keyvault secret list `
+  --vault-name $kv `
+  --query "[].{
+    Name:name,
+    Enabled:attributes.enabled,
+    Updated:attributes.updated,
+    Expires:attributes.expires
+  }" `
+  -o table</code></pre>
+<p>Inspect metadata and version ID without returning a value:</p>
+<pre><code class="language-powershell">$secretNames = @(
+  "mistral-api-key",
+  "azure-devops-org-url",
+  "azure-tenant-id",
+  "azure-client-id",
+  "azure-client-secret"
+)
+
+foreach ($secretName in $secretNames) {
+  az keyvault secret show `
+    --vault-name $kv `
+    --name $secretName `
+    --query "{
+      Name:name,
+      Enabled:attributes.enabled,
+      Updated:attributes.updated,
+      Expires:attributes.expires,
+      VersionId:id
+    }" `
+    -o jsonc
+}</code></pre>
+<h3 id="recommended-fix-update-a-key-vault-value-interactively">Recommended fix - update a Key Vault value interactively</h3>
+<p>Use a secure prompt and suppress command output. This avoids displaying the value, although the CLI still receives the value as a process argument on the local machine:</p>
+<pre><code class="language-powershell">$secureValue = Read-Host "Enter new value for mistral-api-key" -AsSecureString
+$plainValue = ConvertFrom-SecureString $secureValue -AsPlainText
+
+try {
+  az keyvault secret set `
+    --vault-name $kv `
+    --name "mistral-api-key" `
+    --value $plainValue `
+    --output none
+}
+finally {
+  $plainValue = $null
+  $secureValue = $null
+}</code></pre>
+<p>For Azure DevOps, store the input as a masked secret variable and reference the macro only inside the pipeline task:</p>
+<pre><code class="language-powershell"># MISTRAL_API_KEY must be an Azure DevOps secret variable.
+az keyvault secret set `
+  --vault-name "kv-maia-wf" `
+  --name "mistral-api-key" `
+  --value "$(MISTRAL_API_KEY)" `
+  --output none</code></pre>
+<blockquote>The <code>$(MISTRAL_API_KEY)</code> example is Azure DevOps macro syntax. Do not paste it into an ordinary interactive PowerShell session.</blockquote>
+<p>Updating a Key Vault secret does <strong>not</strong> itself create an ACA revision.</p>
+<h3 id="production-notes-7">Production notes</h3>
+<ul><li>Prefer Key Vault, managed identity, and versionless secret references for rotation.</li><li>Never place secret values in source control, Docker images, Helm values, release scripts, pipeline YAML, screenshots, tickets, or chat.</li><li>If a real secret appeared in a screenshot or inline release script, treat it as compromised and rotate it.</li><li>Versionless Key Vault references are refreshed automatically, but restart the active revision for deterministic rollout and verification.</li></ul>
+<hr>
+<h2 id="8-check-and-update-aca-key-vault-secret-references">8. Check and update ACA Key Vault secret references</h2>
+<h3 id="likely-cause-8">Likely cause</h3>
+<p>The ACA secret does not reference Key Vault, points to the wrong URL, uses the wrong identity, or the container environment maps to a different secret name.</p>
+<h3 id="how-to-check-8">How to check</h3>
+<pre><code class="language-powershell">az containerapp show `
+  -n $app `
+  -g $rg `
+  --query "properties.configuration.secrets[].{
+    Name:name,
+    KeyVaultUrl:keyVaultUrl,
+    Identity:identity
+  }" `
+  -o table</code></pre>
+<p>Expected versionless references:</p>
+<pre><code class="language-text">https://kv-maia-wf.vault.azure.net/secrets/mistral-api-key
+https://kv-maia-wf.vault.azure.net/secrets/azure-devops-org-url
+https://kv-maia-wf.vault.azure.net/secrets/azure-tenant-id
+https://kv-maia-wf.vault.azure.net/secrets/azure-client-id
+https://kv-maia-wf.vault.azure.net/secrets/azure-client-secret</code></pre>
+<h3 id="recommended-fix-6">Recommended fix</h3>
+<p>Resolve the managed identity resource ID:</p>
+<pre><code class="language-powershell">$identityId = az identity show `
+  -n $identity `
+  -g $rg `
+  --query id `
+  -o tsv</code></pre>
+<p>Create or update the ACA Key Vault references without exposing values:</p>
+<pre><code class="language-powershell">az containerapp secret set `
+  -n $app `
+  -g $rg `
+  --secrets `
+    "mistral-api-key=keyvaultref:https://kv-maia-wf.vault.azure.net/secrets/mistral-api-key,identityref:$identityId" `
+    "azure-devops-org-url=keyvaultref:https://kv-maia-wf.vault.azure.net/secrets/azure-devops-org-url,identityref:$identityId" `
+    "azure-tenant-id=keyvaultref:https://kv-maia-wf.vault.azure.net/secrets/azure-tenant-id,identityref:$identityId" `
+    "azure-client-id=keyvaultref:https://kv-maia-wf.vault.azure.net/secrets/azure-client-id,identityref:$identityId" `
+    "azure-client-secret=keyvaultref:https://kv-maia-wf.vault.azure.net/secrets/azure-client-secret,identityref:$identityId" `
+  --output none</code></pre>
+<p>ACA secrets are application-scoped. Adding or changing them does <strong>not</strong> create a new revision. Restart the active revision or deploy a new revision so running containers deterministically receive the update:</p>
+<pre><code class="language-powershell">az containerapp revision restart `
+  -n $app `
+  -g $rg `
+  --revision $revision</code></pre>
+<p>Remove an unused ACA secret only after no active revision references it:</p>
+<pre><code class="language-powershell">az containerapp secret remove `
+  -n $app `
+  -g $rg `
+  --secret-names "obsolete-secret"</code></pre>
+<p>Removing an ACA secret does <strong>not</strong> create a revision, but can break existing revisions that still reference it.</p>
+<h3 id="production-notes-8">Production notes</h3>
+<ul><li><code>Key Vault Secrets User</code> is sufficient for an ACA runtime identity that only reads secrets.</li><li><code>Key Vault Secrets Officer</code> permits creating/updating/deleting secrets and is appropriate for a controlled deployment identity, not a least-privileged runtime identity.</li><li>Prefer separate deployment and runtime identities in production.</li></ul>
+<hr>
+<h2 id="9-check-managed-identity-and-key-vault-rbac">9. Check managed identity and Key Vault RBAC</h2>
+<h3 id="likely-cause-9">Likely cause</h3>
+<p><code>maia-wf-identity</code> is not assigned to the app or lacks Key Vault data-plane access.</p>
+<h3 id="how-to-check-9">How to check</h3>
+<p>Show the identity resource:</p>
+<pre><code class="language-powershell">az identity show `
+  -n $identity `
+  -g $rg `
+  --query "{
+    Name:name,
+    Id:id,
+    ClientId:clientId,
+    PrincipalId:principalId,
+    Location:location
+  }" `
+  -o jsonc</code></pre>
+<p>Show the identities assigned to ACA:</p>
+<pre><code class="language-powershell">az containerapp show `
+  -n $app `
+  -g $rg `
+  --query identity `
+  -o jsonc</code></pre>
+<p>Resolve IDs and list Key Vault role assignments:</p>
+<pre><code class="language-powershell">$principalId = az identity show -n $identity -g $rg --query principalId -o tsv
+$kvId = az keyvault show -n $kv -g $rg --query id -o tsv
+
+az role assignment list `
+  --assignee $principalId `
+  --scope $kvId `
+  --include-inherited `
+  --query "[].{
+    Role:roleDefinitionName,
+    Scope:scope,
+    PrincipalType:principalType
+  }" `
+  -o table</code></pre>
+<h3 id="recommended-fix-7">Recommended fix</h3>
+<p>If the identity is not assigned to ACA:</p>
+<pre><code class="language-powershell">$identityId = az identity show -n $identity -g $rg --query id -o tsv
+
+az containerapp identity assign `
+  -n $app `
+  -g $rg `
+  --user-assigned $identityId</code></pre>
+<p>Identity assignment is application-scoped and does <strong>not normally</strong> create a new revision. Verify the app state afterward.</p>
+<p>Grant the runtime identity read-only secret access at Key Vault scope, if authorized:</p>
+<pre><code class="language-powershell">az role assignment create `
+  --assignee-object-id $principalId `
+  --assignee-principal-type ServicePrincipal `
+  --role "Key Vault Secrets User" `
+  --scope $kvId</code></pre>
+<p>RBAC changes do <strong>not</strong> create a revision. Allow for RBAC propagation, then restart and verify the active revision.</p>
+<h3 id="production-notes-9">Production notes</h3>
+<ul><li>Azure Resource Manager Contributor does not automatically grant Key Vault secret data-plane access.</li><li>Use least privilege and scope the role to <code>kv-maia-wf</code>, not the subscription.</li><li>If Key Vault uses private endpoints or firewall restrictions, also verify ACA network/DNS access; correct RBAC alone is insufficient.</li></ul>
+<hr>
+<h2 id="10-check-registry-configuration-and-acrpull">10. Check registry configuration and <code>AcrPull</code></h2>
+<h3 id="likely-cause-10">Likely cause</h3>
+<p>The app uses the wrong registry identity, the image/tag does not exist, or <code>maia-wf-identity</code> lacks <code>AcrPull</code> on <code>acrmaiawf</code>.</p>
+<h3 id="how-to-check-10">How to check</h3>
+<p>Show registry and image configuration:</p>
+<pre><code class="language-powershell">az containerapp show `
+  -n $app `
+  -g $rg `
+  --query "{
+    registries:properties.configuration.registries,
+    containers:properties.template.containers[].{
+      name:name,
+      image:image
+    }
+  }" `
+  -o jsonc</code></pre>
+<p>Confirm the repository and tag exist:</p>
+<pre><code class="language-powershell">az acr repository show-tags `
+  --name $acr `
+  --repository "maia-wf-worker" `
+  --query "[?@=='117418']" `
+  -o table</code></pre>
+<p>Check <code>AcrPull</code> at ACR scope:</p>
+<pre><code class="language-powershell">$principalId = az identity show -n $identity -g $rg --query principalId -o tsv
+$acrId = az acr show -n $acr -g $rg --query id -o tsv
+
+az role assignment list `
+  --assignee $principalId `
+  --scope $acrId `
+  --include-inherited `
+  --query "[].{
+    Role:roleDefinitionName,
+    Scope:scope
+  }" `
+  -o table</code></pre>
+<h3 id="recommended-fix-8">Recommended fix</h3>
+<p>Grant <code>AcrPull</code> if authorized:</p>
+<pre><code class="language-powershell">az role assignment create `
+  --assignee-object-id $principalId `
+  --assignee-principal-type ServicePrincipal `
+  --role AcrPull `
+  --scope $acrId</code></pre>
+<p>If the registry identity setting is wrong:</p>
+<pre><code class="language-powershell">$identityId = az identity show -n $identity -g $rg --query id -o tsv
+
+az containerapp registry set `
+  -n $app `
+  -g $rg `
+  --server "acrmaiawf.azurecr.io" `
+  --identity $identityId</code></pre>
+<p>Registry configuration is application-scoped and does <strong>not</strong> create a new revision. Changing the container image with <code>az containerapp update --image ...</code> <strong>does create a new revision</strong>.</p>
+<h3 id="production-notes-10">Production notes</h3>
+<ul><li>Successful <code>PulledImage</code> proves the registry path and pull authorization worked for that attempt.</li><li>Use managed identity instead of registry username/password.</li><li>Pin immutable image tags or digests and keep rollback images available.</li></ul>
+<hr>
+<h2 id="11-check-federated-credentials-and-related-identity-details">11. Check federated credentials and related identity details</h2>
+<h3 id="likely-cause-11">Likely cause</h3>
+<p>Azure DevOps Workload Identity Federation may be mapped to the wrong user-assigned identity, issuer, subject, or audience.</p>
+<blockquote>This is relevant to the Azure DevOps service connection. It is <strong>not</strong> the cause of the observed Mistral <code>whoami_async()</code> <code>401 Wrong API endpoint</code> after the container had already started.</blockquote>
+<h3 id="how-to-check-11">How to check</h3>
+<p>List federated credentials on <code>maia-wf-identity</code>:</p>
+<pre><code class="language-powershell">az identity federated-credential list `
+  --identity-name $identity `
+  --resource-group $rg `
+  --query "[].{
+    Name:name,
+    Issuer:issuer,
+    Subject:subject,
+    Audiences:audiences
+  }" `
+  -o jsonc</code></pre>
+<p>Show a known credential:</p>
+<pre><code class="language-powershell">az identity federated-credential show `
+  --identity-name $identity `
+  --resource-group $rg `
+  --name "&lt;federated-credential-name&gt;" `
+  -o jsonc</code></pre>
+<p>Validate these fields against the Azure DevOps service connection:</p>
+<pre><code class="language-text">Issuer    = issuer shown by Azure DevOps
+Subject   = subject identifier shown by Azure DevOps
+Audience  = api://AzureADTokenExchange</code></pre>
+<p>The previously observed service connection subject ended with service connection ID:</p>
+<pre><code class="language-text">5a5eb695-c0a3-4fd1-97a3-79847ac85572</code></pre>
+<h3 id="recommended-fix-9">Recommended fix</h3>
+<p>Create or change federated credentials only from the exact issuer/subject values supplied by the Azure DevOps service connection. Do not guess them. After creation, use <code>Verify and save</code> in Azure DevOps.</p>
+<h3 id="production-notes-11">Production notes</h3>
+<ul><li>Workload Identity Federation avoids long-lived client secrets for pipeline authentication.</li><li>Service connection authentication and Azure DevOps repository ACLs are separate. The service principal still needs explicit project/repository permissions.</li><li>The App Registration/service principal previously identified for application authentication was <code>sp-ceva-app-ao_ai_dlc-prd</code>, client ID <code>06f64538-3288-4fb7-a713-1a9b7c14d17c</code>; do not confuse it with the runtime managed identity client ID.</li></ul>
+<hr>
+<h2 id="12-troubleshoot-401-wrong-api-endpoint">12. Troubleshoot <code>401 Wrong API endpoint</code></h2>
+<h3 id="likely-cause-12">Likely cause</h3>
+<p>The logs showed:</p>
+<pre><code class="language-text">mistralai.workflows.worker_client.errors.sdkdefaulterror.SDKDefaultError:
+API error occurred: Status 401. Body: {"detail":"Wrong API endpoint"}</code></pre>
+<p>The container had already pulled its image and started Python. Effective configuration showed:</p>
+<pre><code class="language-text">worker.server_url = https://api.eu.mistral.ai
+agent.mistral_client_server_url = https://api.eu.mistral.ai</code></pre>
+<p>ACA contained both:</p>
+<pre><code class="language-text">SERVER_URL      = https://api.eu.mistral.ai
+MISTRAL_API_URL = https://api.mistral.ai</code></pre>
+<p>The worker reads <code>SERVER_URL</code> for <code>worker.server_url</code>; setting only <code>MISTRAL_API_URL</code> did not override that field.</p>
+<h3 id="how-to-check-12">How to check</h3>
+<ol><li>Confirm that image pull and container startup succeeded in system logs.</li><li>Confirm the exact failing call is Mistral <code>worker_client.whoami_async()</code>.</li><li>Show <code>SERVER_URL</code> and <code>MISTRAL_API_URL</code> in the revision environment; do not show API keys.</li><li>Inspect the startup <code>Configuration loaded</code> log for both <code>worker.server_url</code> and <code>agent.mistral_client_server_url</code>.</li><li>If necessary, inspect the installed package source using the <code>/bin/sh</code> commands in section 5.</li></ol>
+<pre><code class="language-powershell">az containerapp revision show `
+  -n $app `
+  -g $rg `
+  --revision $revision `
+  --query "properties.template.containers[0].env[?name=='SERVER_URL' || name=='MISTRAL_API_URL']" `
+  -o table</code></pre>
+<h3 id="recommended-fix-10">Recommended fix</h3>
+<p>Update the setting the worker actually consumes and remove the misleading variable in a single revision:</p>
+<pre><code class="language-powershell">az containerapp update `
+  -n $app `
+  -g $rg `
+  --remove-env-vars MISTRAL_API_URL `
+  --set-env-vars "SERVER_URL=https://api.mistral.ai"</code></pre>
+<p><strong>This creates a new revision.</strong> Capture its name and follow only that revision's logs:</p>
+<pre><code class="language-powershell">$newRevision = az containerapp show `
+  -n $app `
+  -g $rg `
+  --query "properties.latestRevisionName" `
+  -o tsv
+
+az containerapp logs show `
+  -n $app `
+  -g $rg `
+  --revision $newRevision `
+  --container $container `
+  --type console `
+  --follow</code></pre>
+<h3 id="verification-criteria">Verification criteria</h3>
+<p>The fix is verified only when all are true:</p>
+<pre><code class="language-text">New revision is Active
+RunningState = Running
+HealthState = Healthy
+latestRevisionName = latestReadyRevisionName
+worker.server_url = https://api.mistral.ai
+No new "401 Wrong API endpoint"
+Worker completes whoami/config discovery and remains running</code></pre>
+<p>If <code>agent.mistral_client_server_url</code> still shows <code>https://api.eu.mistral.ai</code>, inspect the installed version's supported config mapping and update that separate setting before model activities are used.</p>
+<h3 id="production-notes-and-remaining-risks">Production notes and remaining risks</h3>
+<ul><li>This 401 is different from Entra ID/Azure DevOps authentication failures. The stack trace failed inside Mistral Workflows before Azure DevOps operations.</li><li>Do not rotate Azure client credentials merely because this particular error says 401; first identify the hostname, client, and response body.</li><li>Alert on repeated container exits, restart count, revision health, <code>401/403</code> rate, Mistral request latency, and worker heartbeat/config-discovery failures.</li><li>Use bounded retries with jitter. Authentication/configuration errors should not trigger aggressive retries or a retry storm.</li></ul>
+<hr>
+<h2 id="13-one-pass-read-only-diagnostic-script">13. One-pass read-only diagnostic script</h2>
+<p>This script performs read-only checks and does not print secret values:</p>
+<pre><code class="language-powershell">$subscription = "subs-bis-sandbox"
+$rg           = "rg-weu-azu-aidlc-sb"
+$app          = "maia-wf-worker"
+$identity     = "maia-wf-identity"
+$kv           = "kv-maia-wf"
+$acr          = "acrmaiawf"
+
+az account set --subscription $subscription
+
+Write-Host "=== SUBSCRIPTION ==="
+az account show --query "{Name:name,Id:id,TenantId:tenantId}" -o table
+
+Write-Host "`n=== MICROSOFT.APP PROVIDER ==="
+az provider show --namespace Microsoft.App --query registrationState -o tsv
+
+Write-Host "`n=== ACA STATE ==="
+az containerapp show -n $app -g $rg `
+  --query "{
+    State:properties.provisioningState,
+    Mode:properties.configuration.activeRevisionsMode,
+    Latest:properties.latestRevisionName,
+    LatestReady:properties.latestReadyRevisionName
+  }" -o table
+
+Write-Host "`n=== IDENTITY ==="
+az containerapp show -n $app -g $rg --query identity -o jsonc
+
+Write-Host "`n=== REGISTRY AND IMAGE ==="
+az containerapp show -n $app -g $rg `
+  --query "{
+    Registries:properties.configuration.registries,
+    Containers:properties.template.containers[].{Name:name,Image:image}
+  }" -o jsonc
+
+Write-Host "`n=== KEY VAULT REFERENCES ==="
+az containerapp show -n $app -g $rg `
+  --query "properties.configuration.secrets[].{
+    Name:name,
+    KeyVaultUrl:keyVaultUrl,
+    Identity:identity
+  }" -o table
+
+Write-Host "`n=== ENVIRONMENT MAPPINGS ==="
+az containerapp show -n $app -g $rg `
+  --query "properties.template.containers[].{
+    Container:name,
+    Env:env[].{Name:name,Value:value,SecretRef:secretRef}
+  }" -o jsonc
+
+Write-Host "`n=== REVISIONS ==="
+az containerapp revision list -n $app -g $rg --all `
+  --query "[].{
+    Revision:name,
+    Active:properties.active,
+    Running:properties.runningState,
+    Health:properties.healthState,
+    Created:properties.createdTime
+  }" -o table
+
+Write-Host "`n=== KEY VAULT SECRET METADATA ==="
+$secretNames = @(
+  "mistral-api-key",
+  "azure-devops-org-url",
+  "azure-tenant-id",
+  "azure-client-id",
+  "azure-client-secret"
+)
+foreach ($secretName in $secretNames) {
+  az keyvault secret show -n $secretName --vault-name $kv `
+    --query "{Name:name,Enabled:attributes.enabled,Updated:attributes.updated,Expires:attributes.expires}" `
+    -o table
+}
+
+Write-Host "`n=== RECENT SYSTEM LOGS ==="
+az containerapp logs show -n $app -g $rg --type system --tail 100</code></pre>
+<hr>
+<h2 id="14-command-impact-matrix">14. Command impact matrix</h2>
+<div class="table-wrap"><table><thead><tr><th>Command/action</th><th>Creates new ACA revision?</th><th>Operational effect</th></tr></thead><tbody><tr><td><code>az containerapp show</code> / revision list/show / logs / exec</td><td>No</td><td>Read/diagnostic; commands inside <code>exec</code> can still mutate runtime state</td></tr><tr><td><code>az account set</code></td><td>No</td><td>Changes local CLI subscription context</td></tr><tr><td>Provider registration</td><td>No</td><td>Subscription-level provider state change</td></tr><tr><td>Key Vault <code>secret set</code></td><td>No</td><td>Creates a new Key Vault secret version</td></tr><tr><td>ACA <code>secret set</code> / <code>secret remove</code></td><td>No</td><td>Changes application-scoped ACA secret configuration</td></tr><tr><td>ACA <code>revision restart</code></td><td>No</td><td>Restarts replicas of an existing revision</td></tr><tr><td>ACA <code>update --set-env-vars</code></td><td><strong>Yes</strong></td><td>Changes revision template</td></tr><tr><td>ACA <code>update --remove-env-vars</code></td><td><strong>Yes</strong></td><td>Changes revision template</td></tr><tr><td>ACA <code>update --image</code></td><td><strong>Yes</strong></td><td>Deploys a new container template/image</td></tr><tr><td>ACA <code>revision set-mode</code></td><td>No</td><td>Changes application-scoped revision mode</td></tr><tr><td>ACA <code>revision activate/deactivate</code></td><td>No</td><td>Changes whether an existing revision runs</td></tr><tr><td>Managed identity/RBAC/federated credential update</td><td>No</td><td>Changes identity/authorization; propagation may take time</td></tr><tr><td>Registry configuration update</td><td>No</td><td>Application-scoped registry configuration change</td></tr></tbody></table></div>
+<h2 id="15-final-production-checklist">15. Final production checklist</h2>
+<ul><li class="task"><input type="checkbox" disabled=""> Correct subscription and tenant verified before every write operation.</li><li class="task"><input type="checkbox" disabled=""> <code>Microsoft.App</code> is registered.</li><li class="task"><input type="checkbox" disabled=""> ACA provisioning state is <code>Succeeded</code>.</li><li class="task"><input type="checkbox" disabled=""> <code>latestRevisionName</code> equals <code>latestReadyRevisionName</code> after deployment.</li><li class="task"><input type="checkbox" disabled=""> Only intended revisions are active; traffic/runtime work is not accidentally split.</li><li class="task"><input type="checkbox" disabled=""> New revision is <code>Running</code> and <code>Healthy</code> before the previous revision is retired.</li><li class="task"><input type="checkbox" disabled=""> <code>maia-wf-identity</code> is assigned to ACA.</li><li class="task"><input type="checkbox" disabled=""> Runtime identity has <code>Key Vault Secrets User</code> at <code>kv-maia-wf</code> scope.</li><li class="task"><input type="checkbox" disabled=""> Runtime identity has <code>AcrPull</code> at <code>acrmaiawf</code> scope.</li><li class="task"><input type="checkbox" disabled=""> ACA uses Key Vault references; secret values are not stored in deployment files.</li><li class="task"><input type="checkbox" disabled=""> Secret environment mappings use <code>secretRef</code>.</li><li class="task"><input type="checkbox" disabled=""> Versionless Key Vault references and a controlled rotation/restart procedure are documented.</li><li class="task"><input type="checkbox" disabled=""> Immutable image tags/digests and rollback steps are available.</li><li class="task"><input type="checkbox" disabled=""> <code>SERVER_URL=https://api.mistral.ai</code> is visible in effective worker config.</li><li class="task"><input type="checkbox" disabled=""> No recurring <code>401 Wrong API endpoint</code>, 403, secret resolution, image pull, or crash-loop errors.</li><li class="task"><input type="checkbox" disabled=""> Logs, metrics, traces, revision health, restart count, worker lag/heartbeat, and authentication failures are alerted.</li><li class="task"><input type="checkbox" disabled=""> Multiple workers are enabled only with tested idempotency, duplicate handling, retry control, and ordering assumptions.</li></ul>
+<h2 id="official-references">Official references</h2>
+<ul><li><a href="https://learn.microsoft.com/azure/container-apps/manage-secrets" target="_blank" rel="noopener noreferrer">Manage secrets in Azure Container Apps</a></li><li><a href="https://learn.microsoft.com/azure/container-apps/revisions" target="_blank" rel="noopener noreferrer">Azure Container Apps revisions</a></li><li><a href="https://learn.microsoft.com/azure/container-apps/revisions-manage" target="_blank" rel="noopener noreferrer">Manage revisions</a></li><li><a href="https://learn.microsoft.com/azure/container-apps/container-console" target="_blank" rel="noopener noreferrer">Connect to a container console</a></li><li><a href="https://learn.microsoft.com/cli/azure/containerapp/revision" target="_blank" rel="noopener noreferrer">Azure CLI: <code>az containerapp revision</code></a></li><li><a href="https://learn.microsoft.com/azure/role-based-access-control/role-assignments-list-cli" target="_blank" rel="noopener noreferrer">List Azure role assignments using Azure CLI</a></li></ul></main>
+  </div>
+  <div class="actions"><button onclick="window.scrollTo({top:0,behavior:&#39;smooth&#39;})">Top</button><button onclick="window.print()">Print / Save PDF</button></div>
+
+
+</body></html>
